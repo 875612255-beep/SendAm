@@ -63,11 +63,11 @@ export default function Dashboard() {
       </div>
 
       {Array.isArray(stats?.balances) && stats.balances.length > 0 && (
-        <div className="mt-8 sm:mt-12 bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-sm overflow-x-auto">
-          <h2 className="text-lg font-bold mb-4">Settled Volume by Asset</h2>
+        <div className="mt-8 sm:mt-12 bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm overflow-x-auto">
+          <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-slate-100">Settled Volume by Asset</h2>
           <table className="w-full text-sm min-w-[480px]">
             <thead>
-              <tr className="text-left text-gray-500 border-b border-gray-100">
+              <tr className="text-left text-gray-500 dark:text-gray-400 border-b border-gray-100 dark:border-slate-800">
                 <th className="py-2 pr-4 font-medium">Asset</th>
                 <th className="py-2 pr-4 font-medium">Amount</th>
                 <th className="py-2 pr-4 font-medium">{stats.balances[0].baseCurrency} equivalent</th>
@@ -76,7 +76,7 @@ export default function Dashboard() {
             </thead>
             <tbody>
               {stats.balances.map((row) => (
-                <tr key={row.asset} className="border-b border-gray-50 last:border-0">
+                <tr key={row.asset} className="border-b border-gray-50 dark:border-slate-800/60 last:border-0 text-slate-800 dark:text-slate-200">
                   <td className="py-2 pr-4 font-medium">{row.asset}</td>
                   <td className="py-2 pr-4">{Number(row.amount).toLocaleString(undefined, { minimumFractionDigits: row.precision ?? 2, maximumFractionDigits: row.precision ?? 2 })}</td>
                   <td className="py-2 pr-4">
@@ -84,7 +84,7 @@ export default function Dashboard() {
                       ? Number(row.baseAmount).toLocaleString(undefined, { style: 'currency', currency: row.baseCurrency })
                       : <span className="text-gray-400">unavailable</span>}
                   </td>
-                  <td className="py-2 text-gray-500">{row.source}</td>
+                  <td className="py-2 text-gray-500 dark:text-gray-400">{row.source}</td>
                 </tr>
               ))}
             </tbody>
@@ -92,9 +92,9 @@ export default function Dashboard() {
         </div>
       )}
 
-      <div className="mt-8 sm:mt-12 bg-white p-5 sm:p-8 rounded-2xl border border-gray-100 shadow-sm">
-        <h2 className="text-lg font-bold mb-4">Welcome to SendAm Admin</h2>
-        <p className="text-gray-600 leading-relaxed max-w-3xl">
+      <div className="mt-8 sm:mt-12 bg-white dark:bg-slate-900 p-5 sm:p-8 rounded-2xl border border-gray-100 dark:border-slate-800 shadow-sm">
+        <h2 className="text-lg font-bold mb-4 text-slate-900 dark:text-slate-100">Welcome to SendAm Admin</h2>
+        <p className="text-gray-600 dark:text-gray-300 leading-relaxed max-w-3xl">
           This dashboard monitors the SendAm architecture: direct-custody wallets, payment orchestration, KYC, audit logs, and system health. All payments settle on Stellar.
         </p>
       </div>

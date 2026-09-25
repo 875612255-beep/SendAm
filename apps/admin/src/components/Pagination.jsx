@@ -28,7 +28,7 @@ export default function Pagination({ pagination, onNext, onPrev }) {
   };
 
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-sm text-gray-600">
+    <div className="flex flex-wrap items-center justify-between gap-3 mt-4 text-sm text-gray-600 dark:text-gray-400">
       <span>
         {pagination.total != null ? `Total: ${pagination.total}` : 'Showing latest results'}
       </span>
@@ -49,7 +49,7 @@ export default function Pagination({ pagination, onNext, onPrev }) {
             type="button"
             onClick={() => onPrev?.(prevCursor)}
             disabled={!canPrev}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 font-medium shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             <ChevronLeft size={16} aria-hidden="true" /> Prev
           </button>
@@ -57,7 +57,7 @@ export default function Pagination({ pagination, onNext, onPrev }) {
             type="button"
             onClick={() => onNext?.(nextCursor)}
             disabled={!canNext}
-            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium shadow-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-40"
+            className="inline-flex items-center gap-1 rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 font-medium shadow-sm transition-colors hover:bg-gray-50 dark:hover:bg-slate-700 disabled:cursor-not-allowed disabled:opacity-40"
           >
             Next <ChevronRight size={16} aria-hidden="true" />
           </button>
