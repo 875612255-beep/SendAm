@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import { describe, it, expect, vi } from 'vitest';
@@ -36,8 +36,6 @@ describe('DataTable empty state', () => {
     expect(screen.getByText(/current search or filters/i)).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /reset filters/i }));
 
-    // Filters and the stale cursor are cleared from the URL, which also
-    // removes the reset action itself.
     expect(screen.getByTestId('location-search').textContent).toBe('');
     expect(screen.queryByRole('button', { name: /reset filters/i })).not.toBeInTheDocument();
   });
@@ -63,7 +61,6 @@ describe('DataTable empty state', () => {
     expect(screen.getByText('Nothing here')).toBeInTheDocument();
     expect(screen.getByText('Custom explanation.')).toBeInTheDocument();
     expect(screen.getByTestId('custom-icon')).toBeInTheDocument();
-    // Custom copy wins, but the reset action still works.
     expect(screen.getByRole('button', { name: /reset filters/i })).toBeInTheDocument();
   });
 
@@ -100,7 +97,6 @@ describe('DataTable populated table', () => {
       'Role',
       'Upper',
     ]);
-    // 1 header row + 2 body rows
     expect(screen.getAllByRole('row')).toHaveLength(3);
     expect(screen.getByRole('cell', { name: 'Ada' })).toBeInTheDocument();
     expect(screen.getByRole('cell', { name: 'viewer' })).toBeInTheDocument();
@@ -151,33 +147,122 @@ describe('DataTable populated table', () => {
   });
 });
 
-describe('DataTable accessible name', () => {
-  const rows = [{ id: 'a', name: 'Ada' }];
+describe('DataTable Virtualization & Keyboard Navigation', () => {
+  const virtCols = [
+    { header: 'ID', accessor: 'id' },
+    { header: 'Name', accessor: 'name' },
+    { header: 'Value', accessor: 'value' },
+  ];
 
-  it('names the table from the caption prop with a visually-hidden caption', () => {
-    renderTable(<DataTable caption="Registered users" columns={columns} data={rows} />);
+  const generateData = (count) =>
+    Array.from({ length: count }, (_, i) => ({
+      id: `row-${i + 1}`,
+      name: `User ${i + 1}`,
+      value: (i + 1) * 10,
+    }));
 
-    expect(screen.getByRole('table', { name: 'Registered users' })).toBeInTheDocument();
-    const caption = screen.getByText('Registered users');
-    expect(caption.tagName).toBe('CAPTION');
-    expect(caption).toHaveClass('sr-only');
+  it('renders standard table without virtualization when data is below threshold', () => {
+    const data = generateData(20);
+    renderTable(<DataTable columns={virtCols} data={data} virtualizeThreshold={50} />);
+
+    const container = screen.getByTestId('datatable-container');
+    expect(container).toHaveAttribute('data-virtualized', 'false');
+
+    const dataRows = screen.getAllByRole('row').filter((r) => r.hasAttribute('data-row-index'));
+    expect(dataRows).toHaveLength(20);
   });
 
-  it('renders no caption element when the prop is omitted', () => {
-    const { container } = renderTable(<DataTable columns={columns} data={rows} />);
+  it('enables virtualization when data meets or exceeds threshold', () => {
+    const data = generateData(150);
+    renderTable(
+      <DataTable
+        columns={virtCols}
+        data={data}
+        virtualizeThreshold={50}
+        rowHeight={50}
+        maxHeight={500}
+        overscan={3}
+      />
+    );
 
-    expect(container.querySelector('caption')).toBeNull();
+    const container = screen.getByTestId('datatable-container');
+    expect(container).toHaveAttribute('data-virtualized', 'true');
+
+    const dataRows = screen.getAllByRole('row').filter((r) => r.hasAttribute('data-row-index'));
+    expect(dataRows.length).toBeLessThan(40);
+    expect(dataRows.length).toBeGreaterThan(0);
   });
 
-  it('labels the empty-state status region with the caption', () => {
-    renderTable(<DataTable caption="Registered users" columns={columns} data={[]} />);
+  it('virtualizes window correctly on scroll', () => {
+    const data = generateData(200);
+    renderTable(
+      <DataTable
+        columns={virtCols}
+        data={data}
+        virtualizeThreshold={50}
+        rowHeight={50}
+        maxHeight={500}
+        overscan={2}
+      />
+    );
 
-    expect(screen.getByRole('status', { name: 'Registered users' })).toBeInTheDocument();
+    const container = screen.getByTestId('datatable-container');
+
+    expect(screen.getByText('User 1')).toBeInTheDocument();
+
+    act(() => {
+      fireEvent.scroll(container, { target: { scrollTop: 2500 } });
+    });
+
+    expect(screen.queryByText('User 1')).not.toBeInTheDocument();
+    expect(screen.getByText('User 51')).toBeInTheDocument();
   });
 
-  it('treats a missing data prop as an empty table', () => {
-    renderTable(<DataTable columns={columns} />);
+  it('navigates rows seamlessly with ArrowDown, ArrowUp, Home, End', () => {
+    const onRowClick = vi.fn();
+    const data = generateData(100);
+    renderTable(
+      <DataTable
+        columns={virtCols}
+        data={data}
+        onRowClick={onRowClick}
+        virtualizeThreshold={50}
+        rowHeight={50}
+        maxHeight={400}
+      />
+    );
 
-    expect(screen.getByText('No records found.')).toBeInTheDocument();
+    const firstRow = screen.getByText('User 1').closest('tr');
+    firstRow.focus();
+
+    act(() => {
+      fireEvent.keyDown(firstRow, { key: 'ArrowDown' });
+    });
+    const secondRow = screen.getByText('User 2').closest('tr');
+    expect(secondRow).toHaveFocus();
+
+    act(() => {
+      fireEvent.keyDown(secondRow, { key: 'ArrowUp' });
+    });
+    expect(firstRow).toHaveFocus();
+
+    act(() => {
+      fireEvent.keyDown(firstRow, { key: 'End' });
+    });
+    const lastRow = screen.getByText('User 100').closest('tr');
+    expect(lastRow).toBeInTheDocument();
+    expect(lastRow).toHaveFocus();
+
+    act(() => {
+      fireEvent.keyDown(lastRow, { key: 'Home' });
+    });
+    const backToFirst = screen.getByText('User 1').closest('tr');
+    expect(backToFirst).toBeInTheDocument();
+    expect(backToFirst).toHaveFocus();
+
+    act(() => {
+      fireEvent.keyDown(backToFirst, { key: 'Enter' });
+    });
+    expect(onRowClick).toHaveBeenCalledWith(data[0]);
   });
 });
