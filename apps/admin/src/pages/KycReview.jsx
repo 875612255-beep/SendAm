@@ -7,9 +7,15 @@ import Loader from '@shared/Loader';
 import Pagination from '@/components/Pagination';
 import FilterBar from '@/components/FilterBar';
 import { REJECTION_REASONS } from '@/lib/rejectionReasons';
+import PasskeyPromptModal, { usePasskeyStepUp } from '@/components/PasskeyPromptModal';
+
+export { REJECTION_REASONS };
 
 export default function KycReview() {
   const { params, getFilter, setFilter, resetFilters, goNext, goPrev } = useListQuery(['status', 'phone', 'country']);
+  // Approve / reject / export are all high-risk compliance decisions, so each
+  // mutation is gated behind a WebAuthn passkey assertion.
+  const { startStepUp, stepUpModalProps } = usePasskeyStepUp();
   const [rows, setRows] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -50,11 +56,11 @@ export default function KycReview() {
     };
   }, [params, refreshKey]);
 
-  const handleApprove = async (id) => {
+  const handleApprove = async (id, stepUp = {}) => {
     setMutatingId(id);
     setError('');
     try {
-      await approveKyc(id);
+      await approveKyc(id, stepUp);
       setRows((prev) => prev.map((r) => r._id === id ? { ...r, status: 'approved' } : r));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to approve KYC');
@@ -63,11 +69,11 @@ export default function KycReview() {
     }
   };
 
-  const handleReject = async (id, reason) => {
+  const handleReject = async (id, reason, stepUp = {}) => {
     setMutatingId(id);
     setError('');
     try {
-      await rejectKyc(id, reason);
+      await rejectKyc(id, reason, stepUp);
       setRows((prev) => prev.map((r) => r._id === id ? { ...r, status: 'rejected' } : r));
     } catch (err) {
       setError(err.response?.data?.message || 'Failed to reject KYC');
@@ -97,13 +103,13 @@ export default function KycReview() {
     rejectionReason !== '' &&
     (rejectionReason !== 'other' || rejectionNotes.trim().length > 0);
 
-  const handleConfirmSubmit = async (event) => {
+  const handleConfirmSubmit = (event) => {
     event.preventDefault();
     if (!confirmTarget) return;
     const id = confirmTarget._id;
     if (confirmAction === 'approve') {
       closeConfirm();
-      await handleApprove(id);
+      startStepUp('kyc.approve', (stepUp) => handleApprove(id, stepUp));
       return;
     }
     if (!rejectionReasonValid) return;
@@ -111,19 +117,23 @@ export default function KycReview() {
       ? `${rejectionReason}: ${rejectionNotes.trim()}`
       : rejectionReason;
     closeConfirm();
-    await handleReject(id, reason);
+    startStepUp('kyc.reject', (stepUp) => handleReject(id, reason, stepUp));
   };
 
-  const handleExport = async () => {
-    setExporting(true);
+  // Compliance exports need the same biometric step-up as the mutations; the
+  // assertion travels as a request header because the response is a blob.
+  const handleExport = () => {
     setError('');
-    try {
-      await exportAdminKyc(params);
-    } catch (err) {
-      setError(err.response?.data?.message || 'Failed to export KYC');
-    } finally {
-      setExporting(false);
-    }
+    startStepUp('kyc.export', async (stepUp) => {
+      setExporting(true);
+      try {
+        await exportAdminKyc(params, stepUp);
+      } catch (err) {
+        setError(err.response?.data?.message || 'Failed to export KYC');
+      } finally {
+        setExporting(false);
+      }
+    });
   };
 
   if (loading) return <div className="flex justify-center py-20" data-testid="kyc-loading"><Loader size={32} /></div>;
@@ -266,6 +276,11 @@ export default function KycReview() {
               </div>
             )}
 
+            <p className="mt-4 rounded-lg bg-slate-50 px-3 py-2 text-xs text-slate-600">
+              Passkey verification is required. You will confirm with your device biometrics or
+              security key after submitting.
+            </p>
+
             <div className="flex justify-end gap-3 mt-6">
               <button
                 type="button"
@@ -292,6 +307,9 @@ export default function KycReview() {
           </form>
         </div>
       )}
+
+      {/* WebAuthn / passkey step-up prompt for high-risk compliance actions */}
+      <PasskeyPromptModal {...stepUpModalProps} />
     </div>
   );
 }
