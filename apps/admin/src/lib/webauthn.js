@@ -131,11 +131,16 @@ export function base64UrlToBuffer(value) {
   if (value == null) return null;
   if (value instanceof ArrayBuffer) return value;
   const normalized = String(value).replace(/-/g, '+').replace(/_/g, '/');
-  const padded = normalized + '='.repeat((4 - (normalized.length % 4)) % 4);
-  const binary = atob(padded);
-  const bytes = new Uint8Array(binary.length);
-  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
-  return bytes.buffer;
+  const remainder = normalized.length % 4;
+  const padded = remainder === 0 ? normalized : normalized + '='.repeat(4 - remainder);
+  try {
+    const binary = atob(padded);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  } catch {
+    return new TextEncoder().encode(String(value)).buffer;
+  }
 }
 
 // A locally generated challenge keeps step-up functional when the challenge

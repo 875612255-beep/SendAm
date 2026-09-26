@@ -57,17 +57,25 @@ export const getAdminStats = async () => {
   return data;
 };
 
-// Every admin list accepts the same cursor + filter `params` shape:
-//   { limit, after, before, ...filters }  ->  { data, pagination, success }
-// `after`/`before` are opaque cursors returned by the API; filter keys are
-// forwarded as query params and resolved server-side.
 export const getAdminUsers = async (params = {}) => {
   const { data } = await api.get('/admin/users', { params });
   return data;
 };
 
+// Single-user drill-down detail endpoint (#325).
+export const getAdminUser = async (id) => {
+  const { data } = await api.get(`/admin/users/${id}`);
+  return data;
+};
+
 export const getAdminWallets = async (params = {}) => {
   const { data } = await api.get('/admin/wallets', { params });
+  return data;
+};
+
+// Single-wallet fetch for the drill-down detail page (#326).
+export const getAdminWallet = async (id) => {
+  const { data } = await api.get(`/admin/wallets/${id}`);
   return data;
 };
 
@@ -113,22 +121,29 @@ export const exportAdminTransactions = async (params = {}) => {
   return response.data;
 };
 
-export const exportAdminKyc = async (params = {}, stepUp = {}) => {
-  // Strip cursor/pagination params — exports always cover the full filtered set.
+export const fetchAdminKycExportData = async (params = {}, stepUp = {}) => {
   const { after: _a, before: _b, limit: _l, ...filters } = params;
   const response = await api.get('/admin/kyc/export', {
     params: filters,
     responseType: 'blob',
     headers: buildStepUpHeaders(stepUp),
   });
-  triggerDownload(response.data, 'kyc-export.csv');
   return response.data;
+};
+
+export const exportAdminKyc = async (params = {}, stepUp = {}) => {
+  const data = await fetchAdminKycExportData(params, stepUp);
+  triggerDownload(data, 'kyc-export.csv');
+  return data;
 };
 
 export const exportAdminAuditLogs = async (params = {}) => {
   // Strip cursor/pagination params — exports always cover the full filtered set.
   const { after: _a, before: _b, limit: _l, ...filters } = params;
-  const response = await api.get('/admin/audit-logs/export', { params: filters, responseType: 'blob' });
+  const response = await api.get('/admin/audit-logs/export', {
+    params: filters,
+    responseType: 'blob',
+  });
   triggerDownload(response.data, 'audit-logs-export.csv');
   return response.data;
 };
@@ -180,7 +195,10 @@ export const verifyAdminEventChain = async () => {
 
 export const exportAdminWorkflowEvents = async (params = {}) => {
   const { after, before, limit, ...filters } = params;
-  const response = await api.get('/admin/events/export', { params: filters, responseType: 'blob' });
+  const response = await api.get('/admin/events/export', {
+    params: filters,
+    responseType: 'blob',
+  });
   triggerDownload(response.data, 'workflow-events-export.csv');
   return response.data;
 };
@@ -202,14 +220,20 @@ export const downloadUserEvidencePackage = async (userId, stepUp = {}) => {
 
 export const exportAdminKycEvidence = async (params = {}) => {
   const { after, before, limit, ...filters } = params;
-  const response = await api.get('/admin/compliance/kyc-evidence/export', { params: filters, responseType: 'blob' });
+  const response = await api.get('/admin/compliance/kyc-evidence/export', {
+    params: filters,
+    responseType: 'blob',
+  });
   triggerDownload(response.data, 'kyc-evidence-export.csv');
   return response.data;
 };
 
 export const exportAdminAccountStatusHistory = async (params = {}) => {
   const { after, before, limit, ...filters } = params;
-  const response = await api.get('/admin/compliance/account-status/export', { params: filters, responseType: 'blob' });
+  const response = await api.get('/admin/compliance/account-status/export', {
+    params: filters,
+    responseType: 'blob',
+  });
   triggerDownload(response.data, 'account-status-export.csv');
   return response.data;
 };
@@ -244,4 +268,3 @@ export const getUserAccountStatusHistory = async (userId) => {
   const { data } = await api.get(`/admin/users/${userId}/account-status`);
   return data;
 };
-

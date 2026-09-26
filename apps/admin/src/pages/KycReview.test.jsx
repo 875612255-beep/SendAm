@@ -40,14 +40,11 @@ describe('KycReview Component', () => {
     renderKyc();
     await waitForTable();
 
-    // The status badge renders the lowercase API status; the capitalize
-    // styling is purely visual, so match case-insensitively within the table.
     const table = screen.getByRole('table');
     expect(within(table).getByText(/pending/i)).toBeInTheDocument();
     const approveButton = screen.getByRole('button', { name: /approve/i });
     await userEvent.click(approveButton);
 
-    // Approval now requires explicit modal confirmation.
     const dialog = await screen.findByRole('dialog');
     expect(within(dialog).getByText(/approve kyc/i)).toBeInTheDocument();
     await userEvent.click(within(dialog).getByRole('button', { name: /confirm approval/i }));
@@ -57,7 +54,6 @@ describe('KycReview Component', () => {
       expect(within(table).getByText(/approved/i)).toBeInTheDocument();
     });
 
-    // Approve/Reject action buttons should no longer appear for this record
     expect(screen.queryByRole('button', { name: /approve/i })).not.toBeInTheDocument();
   });
 
@@ -198,7 +194,10 @@ describe('KycReview Component', () => {
   it('handles failed mutation gracefully', async () => {
     server.use(
       http.post('*/api/compliance/kyc/:id/review', () => {
-        return HttpResponse.json({ message: 'KYC failed validation' }, { status: 400 });
+        return HttpResponse.json(
+          { message: 'KYC failed validation' },
+          { status: 400 }
+        );
       })
     );
 
@@ -213,11 +212,54 @@ describe('KycReview Component', () => {
     await completeStepUp();
 
     await waitFor(() => {
-      expect(screen.getByRole('alert')).toHaveTextContent('KYC failed validation');
+      expect(screen.getByRole('alert')).toHaveTextContent(
+        'KYC failed validation'
+      );
     });
 
     // Status should remain pending
     const table = screen.getByRole('table');
     expect(within(table).getByText(/pending/i)).toBeInTheDocument();
+  });
+
+  it('opens export modal and completes encrypted export flow', async () => {
+    renderKyc();
+    await waitForTable();
+
+    const exportBtn = screen.getByTestId('export-kyc');
+    await userEvent.click(exportBtn);
+
+    expect(screen.getByTestId('kyc-export-modal')).toBeInTheDocument();
+    expect(screen.getByText(/Export KYC Data/i)).toBeInTheDocument();
+
+    const passInput = screen.getByTestId('kyc-export-passphrase');
+    const confirmInput = screen.getByTestId('kyc-export-confirm-passphrase');
+    await userEvent.type(passInput, 'OperatorPass123!');
+    await userEvent.type(confirmInput, 'OperatorPass123!');
+
+    const confirmExportBtn = screen.getByTestId('confirm-export-btn');
+    await userEvent.click(confirmExportBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('kyc-export-modal')).not.toBeInTheDocument();
+    });
+  });
+
+  it('validates passphrase mismatch in export modal', async () => {
+    renderKyc();
+    await waitForTable();
+
+    await userEvent.click(screen.getByTestId('export-kyc'));
+
+    const passInput = screen.getByTestId('kyc-export-passphrase');
+    const confirmInput = screen.getByTestId('kyc-export-confirm-passphrase');
+    await userEvent.type(passInput, 'OperatorPass123!');
+    await userEvent.type(confirmInput, 'DifferentPass123!');
+
+    await userEvent.click(screen.getByTestId('confirm-export-btn'));
+
+    expect(screen.getByRole('alert')).toHaveTextContent(
+      /Passphrases do not match/i
+    );
   });
 });
