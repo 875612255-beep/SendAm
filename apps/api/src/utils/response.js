@@ -54,7 +54,7 @@ const sendCursorPaginated = (
 };
 
 const response = (res, statusCode = 200, payload = {}) => {
-  res.status(statusCode).json(withCorrelation(payload));
+  return res.status(statusCode).json(withCorrelation(payload));
 };
 
 module.exports = {
