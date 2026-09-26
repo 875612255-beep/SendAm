@@ -1,35 +1,35 @@
 import { useState, useRef, useEffect, useCallback, useMemo } from 'react';
-import { SearchX, FilterX } from 'lucide-react';
+import { SearchX, FilterX, ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react';
 import { useSearchParams } from 'react-router-dom';
 
-/**
- * Generic data table with row-click support, keyboard navigation,
- * and high-performance virtualized scrolling for large data sets (100+ items).
- *
- * Props:
- *   columns        — array of { header, accessor?, render? }
- *   data           — array of row objects
- *   caption        — accessible name for the table; rendered as a visually-hidden
- *                    <caption> (and used as the empty-state label) so screen-reader
- *                    users can identify the table's purpose
- *   keyField       — unique key field name (default: 'id')
- *   onRowClick     — optional (row) => void handler; makes rows focusable / clickable
- *   rowClassName   — optional extra class(es) added to every <tr>
- *   emptyState     — optional { title, description, icon } overriding the default
- *                    copy/icon used when a query yields no rows
- *   filtersActive  — optional boolean; when omitted it is derived from the URL
- *                    (any query param besides the pagination cursors counts as a filter)
- *   onResetFilters — optional callback for the empty-state "Reset Filters" button;
- *                    defaults to clearing the filter params from the URL
- *   rowHeight      — estimated height of each row in px (default: 53)
- *   maxHeight      — max scroll container height in px or CSS value (default: 600)
- *   overscan       — number of buffer items above and below viewport (default: 5)
- *   virtualizeThreshold — min rows before virtualization activates (default: 50)
- */
+const FOCUSABLE_HEADER = 'focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary';
 
 // Pagination cursors and page size are not filters — they must not trigger the
 // "Reset Filters" recovery action in the empty state.
 const NON_FILTER_PARAMS = new Set(['after', 'before', 'limit']);
+
+function compareValues(a, b) {
+  if (a === b) return 0;
+  if (a === null || a === undefined || a === '') return 1;
+  if (b === null || b === undefined || b === '') return -1;
+  if (typeof a === 'number' && typeof b === 'number') return a - b;
+  if (typeof a === 'boolean' && typeof b === 'boolean') return Number(a) - Number(b);
+
+  const aTime = Date.parse(a);
+  const bTime = Date.parse(b);
+  if (!Number.isNaN(aTime) && !Number.isNaN(bTime)) return aTime - bTime;
+
+  return String(a).localeCompare(String(b), undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function sortRows(data, columns, sort) {
+  if (!sort || !data) return data || [];
+  const key = sort.key;
+  const column = columns.find((c) => c.sortable && (c.accessor ?? c.header) === key);
+  if (!column) return data;
+  const factor = sort.direction === 'descending' ? -1 : 1;
+  return [...data].sort((a, b) => factor * compareValues(a[key], b[key]));
+}
 
 export default function DataTable({
   columns,
@@ -38,6 +38,7 @@ export default function DataTable({
   keyField = 'id',
   onRowClick,
   rowClassName = '',
+  defaultSort = null,
   emptyState,
   filtersActive,
   onResetFilters,
@@ -46,10 +47,29 @@ export default function DataTable({
   overscan = 5,
   virtualizeThreshold = 50,
 }) {
+  const [sort, setSort] = useState(defaultSort);
   const [searchParams, setSearchParams] = useSearchParams();
   const hasActiveFilters =
     filtersActive ??
     Array.from(searchParams.keys()).some((key) => !NON_FILTER_PARAMS.has(key));
+
+  const sortKeyOf = (column) => column.accessor ?? column.header;
+  const sortedData = useMemo(() => sortRows(data, columns, sort), [data, columns, sort]);
+
+  const handleSort = (column) => {
+    const key = sortKeyOf(column);
+    setSort((current) =>
+      current?.key !== key
+        ? { key, direction: 'ascending' }
+        : { key, direction: current.direction === 'ascending' ? 'descending' : 'ascending' }
+    );
+  };
+
+  const ariaSortFor = (column) => {
+    if (!column.sortable) return undefined;
+    if (sort?.key !== sortKeyOf(column)) return 'none';
+    return sort.direction === 'descending' ? 'descending' : 'ascending';
+  };
 
   const containerRef = useRef(null);
   const rowRefs = useRef(new Map());
@@ -59,7 +79,7 @@ export default function DataTable({
   );
   const [focusedIndex, setFocusedIndex] = useState(null);
 
-  const totalRows = data ? data.length : 0;
+  const totalRows = sortedData ? sortedData.length : 0;
   const isVirtualized = totalRows >= virtualizeThreshold;
 
   useEffect(() => {
@@ -92,7 +112,7 @@ export default function DataTable({
         endIndex: totalRows - 1,
         topPadding: 0,
         bottomPadding: 0,
-        visibleRows: data || [],
+        visibleRows: sortedData || [],
       };
     }
 
@@ -105,7 +125,7 @@ export default function DataTable({
 
     const topPad = start * rowHeight;
     const bottomPad = Math.max(0, (totalRows - 1 - end) * rowHeight);
-    const sliced = data.slice(start, end + 1);
+    const sliced = sortedData.slice(start, end + 1);
 
     return {
       startIndex: start,
@@ -114,7 +134,7 @@ export default function DataTable({
       bottomPadding: bottomPad,
       visibleRows: sliced,
     };
-  }, [isVirtualized, totalRows, scrollTop, rowHeight, overscan, containerHeight, data]);
+  }, [isVirtualized, totalRows, scrollTop, rowHeight, overscan, containerHeight, sortedData]);
 
   const scrollRowIntoView = useCallback(
     (targetIndex) => {
@@ -189,7 +209,7 @@ export default function DataTable({
       case ' ': {
         if (onRowClick) {
           e.preventDefault();
-          onRowClick(data[rowIndex]);
+          onRowClick(sortedData[rowIndex]);
         }
         break;
       }
@@ -223,23 +243,21 @@ export default function DataTable({
 
     return (
       <div
-        role="status"
-        aria-label={caption}
-        className="bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm px-6 py-14 sm:py-16 text-center"
+        role="region"
+        aria-label={caption ? `${caption} empty state` : 'Empty table'}
+        className="w-full bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 p-8 sm:p-12 text-center shadow-sm"
       >
-        <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary dark:bg-teal-950/50 text-primary dark:text-teal-400">
+        <div className="mx-auto w-12 h-12 rounded-full bg-gray-50 dark:bg-slate-800 flex items-center justify-center text-gray-400 dark:text-gray-500 mb-3">
           <Icon className="w-6 h-6" aria-hidden="true" />
         </div>
-        <p className="mt-4 text-base sm:text-lg font-semibold text-dark dark:text-white">{title}</p>
-        <p className="mt-2 mx-auto max-w-md text-sm leading-6 text-gray-500 dark:text-gray-400">{description}</p>
+        <h3 className="text-base font-semibold text-gray-900 dark:text-gray-100 mb-1">{title}</h3>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-sm mx-auto mb-4">{description}</p>
         {hasActiveFilters && (
           <button
             type="button"
             onClick={handleReset}
-            data-testid="empty-reset-filters"
-            className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary dark:bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-accent focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium rounded-lg text-primary dark:text-teal-400 bg-secondary dark:bg-teal-950/60 hover:bg-emerald-100 dark:hover:bg-teal-900/60 transition-colors"
           >
-            <FilterX size={16} aria-hidden="true" />
             Reset Filters
           </button>
         )}
@@ -247,7 +265,7 @@ export default function DataTable({
     );
   }
 
-  const containerStyle = isVirtualized
+  const containerStyles = isVirtualized
     ? {
         maxHeight: typeof maxHeight === 'number' ? `${maxHeight}px` : maxHeight,
         overflowY: 'auto',
@@ -258,18 +276,44 @@ export default function DataTable({
     <div
       ref={containerRef}
       onScroll={isVirtualized ? handleScroll : undefined}
-      style={containerStyle}
+      style={containerStyles}
       data-testid="datatable-container"
-      data-virtualized={isVirtualized ? 'true' : 'false'}
+      data-virtualized={isVirtualized}
       className="w-full max-w-full overflow-x-auto bg-white dark:bg-slate-900 rounded-xl border border-gray-100 dark:border-slate-800 shadow-sm focus:outline-none"
+      tabIndex={isVirtualized ? 0 : undefined}
+      aria-label={caption ? `${caption} scrollable view` : undefined}
     >
       <table className="min-w-max w-full text-sm text-left text-gray-600 dark:text-gray-300 border-collapse">
         {caption && <caption className="sr-only">{caption}</caption>}
-        <thead className={`text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-slate-800/60 border-b border-gray-100 dark:border-slate-800 ${isVirtualized ? 'sticky top-0 z-10' : ''}`}>
+        <thead className="text-xs text-gray-500 dark:text-gray-400 uppercase bg-gray-50 dark:bg-slate-800/60 border-b border-gray-100 dark:border-slate-800 sticky top-0 z-10">
           <tr>
             {columns.map((col, idx) => (
-              <th key={idx} scope="col" className="px-4 sm:px-6 py-4 whitespace-nowrap bg-gray-50 dark:bg-slate-800">
-                {col.header}
+              <th
+                key={idx}
+                scope="col"
+                aria-sort={ariaSortFor(col)}
+                className="px-4 sm:px-6 py-4 whitespace-nowrap bg-gray-50 dark:bg-slate-800"
+              >
+                {col.sortable ? (
+                  <button
+                    type="button"
+                    onClick={() => handleSort(col)}
+                    className={`inline-flex items-center gap-1.5 uppercase font-semibold ${FOCUSABLE_HEADER}`}
+                  >
+                    {col.header}
+                    {sort?.key === sortKeyOf(col) ? (
+                      sort.direction === 'ascending' ? (
+                        <ArrowUp size={14} aria-hidden="true" />
+                      ) : (
+                        <ArrowDown size={14} aria-hidden="true" />
+                      )
+                    ) : (
+                      <ChevronsUpDown size={14} aria-hidden="true" />
+                    )}
+                  </button>
+                ) : (
+                  col.header
+                )}
               </th>
             ))}
           </tr>
