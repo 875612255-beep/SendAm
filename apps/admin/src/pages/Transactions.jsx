@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { SlidersHorizontal } from 'lucide-react';
 import { getAdminTransactions, exportAdminTransactions } from '@/lib/adminApi';
 import { useListQuery } from '@/lib/useListQuery';
 import { formatDate } from '@shared/formatDate';
@@ -20,6 +21,7 @@ export default function Transactions() {
   const { params, getFilter, setFilter, resetFilters, goNext, goPrev } = useListQuery([
     'status', 'asset', 'rail', 'phone', 'userId', 'identifier', 'from', 'to',
   ]);
+  const [showFilters, setShowFilters] = useState(true);
   const [transactions, setTransactions] = useState([]);
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -28,9 +30,9 @@ export default function Transactions() {
   const [exportError, setExportError] = useState(null);
 
   const handleExport = async () => {
-    setExporting(true);
-    setExportError(null);
     try {
+      setExporting(true);
+      setExportError(null);
       await exportAdminTransactions(params);
     } catch (err) {
       setExportError(err.response?.data?.message || 'Failed to export transactions');
@@ -46,12 +48,11 @@ export default function Transactions() {
       setError(null);
       try {
         const res = await getAdminTransactions(params);
-        if (!active) return;
-        setTransactions(res.data);
-        setPagination(res.pagination);
+        if (active) {
+          setTransactions(res.data);
+          setPagination(res.pagination);
+        }
       } catch (err) {
-        // Replace silent failure with a safe, observable error state.
-        // normalizeError ensures raw error.message / stack never reaches the UI.
         if (active) setError(normalizeError(err));
       } finally {
         if (active) setLoading(false);
@@ -62,6 +63,11 @@ export default function Transactions() {
   }, [params]);
 
   const columns = [
+    { header: 'ID / Hash', render: (row) => (
+      <span className="font-mono text-xs text-gray-500">
+        {row.txHash ? `${row.txHash.substring(0, 10)}…` : row._id || row.id}
+      </span>
+    )},
     { header: 'User Phone', render: (row) => row.userId?.phoneNumber || 'Unknown' },
     { header: 'Type', render: (row) => <span className="capitalize font-medium text-gray-700">{row.type}</span> },
     { header: 'Amount', render: (row) => <span className="font-bold">{row.amount} {row.asset}</span> },
@@ -91,6 +97,19 @@ export default function Transactions() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-bold">Transactions</h1>
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            aria-label={showFilters ? 'Hide filters' : 'Show filters'}
+            onClick={() => setShowFilters((v) => !v)}
+            className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-sm font-medium shadow-sm transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+              showFilters
+                ? 'border-primary bg-primary text-white hover:bg-accent'
+                : 'border-gray-200 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
+          >
+            <SlidersHorizontal size={14} aria-hidden="true" />
+            Filters
+          </button>
           <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
             {pagination?.total != null ? `Total: ${pagination.total}` : ''}
           </span>
@@ -112,21 +131,23 @@ export default function Transactions() {
         </div>
       )}
 
-      <FilterBar
-        fields={[
-          { key: 'status', label: 'Status', type: 'select', options: ['pending', 'processing', 'success', 'failed'] },
-          { key: 'asset', label: 'Asset', placeholder: 'e.g. USDC' },
-          { key: 'rail', label: 'Rail', placeholder: 'e.g. stellar' },
-          { key: 'phone', label: 'User Phone', placeholder: 'Search phone…' },
-          { key: 'userId', label: 'User ID', placeholder: 'User ID…' },
-          { key: 'identifier', label: 'Tx ID / Hash', placeholder: 'id, txHash…' },
-          { key: 'from', label: 'From', type: 'date' },
-          { key: 'to', label: 'To', type: 'date' },
-        ]}
-        getFilter={getFilter}
-        setFilter={setFilter}
-        onReset={resetFilters}
-      />
+      {showFilters && (
+        <FilterBar
+          fields={[
+            { key: 'status', label: 'Status', type: 'select', options: ['pending', 'processing', 'success', 'failed'] },
+            { key: 'asset', label: 'Asset', placeholder: 'e.g. USDC' },
+            { key: 'rail', label: 'Rail', placeholder: 'e.g. stellar' },
+            { key: 'phone', label: 'User Phone', placeholder: 'Search phone…' },
+            { key: 'userId', label: 'User ID', placeholder: 'User ID…' },
+            { key: 'identifier', label: 'Tx ID / Hash', placeholder: 'id, txHash…' },
+            { key: 'from', label: 'From', type: 'date' },
+            { key: 'to', label: 'To', type: 'date' },
+          ]}
+          getFilter={getFilter}
+          setFilter={setFilter}
+          onReset={resetFilters}
+        />
+      )}
 
       {loading ? (
         <div className="flex justify-center py-20"><Loader /></div>
