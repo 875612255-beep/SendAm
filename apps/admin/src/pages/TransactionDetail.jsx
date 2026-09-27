@@ -6,7 +6,8 @@ import { formatDate } from '@shared/formatDate';
 import StatusBadge from '@/components/StatusBadge';
 import Loader from '@shared/Loader';
 import { exportReceiptPdf } from '@/lib/receiptPdf';
-import { Download } from 'lucide-react';
+import { Download, FileCode } from 'lucide-react';
+import XdrDecoderModal from '@/components/XdrDecoderModal';
 
 const Field = ({ label, value, mono = false, children }) => (
   <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
@@ -79,6 +80,7 @@ const renderJsonWithSyntaxHighlighting = (jsonStr) => {
  * Route: /transactions/:id
  * Closes #324 — operator can inspect every field of a transaction including
  * the explorer link, route metadata, and the linked user phone.
+ * Closes #585 — client-side Stellar Horizon XDR transaction envelope decoder and visualizer.
  */
 export default function TransactionDetail() {
   const { id } = useParams();
@@ -86,8 +88,12 @@ export default function TransactionDetail() {
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+<<<<<<< HEAD
   const [showRawJson, setShowRawJson] = useState(false);
   const [copied, setCopied] = useState(false);
+=======
+  const [isDecoderOpen, setIsDecoderOpen] = useState(false);
+>>>>>>> 1843b45 (feat(admin): implement client-side stellar horizon xdr transaction envelope decoder and visualizer)
 
   useEffect(() => {
     const fetchTx = async () => {
@@ -153,23 +159,42 @@ export default function TransactionDetail() {
 
   if (!tx) return null;
 
+  const rawXdr =
+    tx.envelopeXdr ||
+    tx.metadata?.envelopeXdr ||
+    tx.metadata?.xdr ||
+    tx.txEnvelope ||
+    '';
+
   return (
     <div className="min-w-0">
       {/* Header */}
-      <div className="flex items-center gap-4 mb-6">
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="text-sm text-primary hover:underline flex-shrink-0"
-          aria-label="Back to transactions"
-        >
-          ← Back
-        </button>
-        <h1 className="text-xl sm:text-2xl font-bold truncate">
-          Transaction Detail
-        </h1>
-        <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+        <div className="flex items-center gap-4 min-w-0">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="text-sm text-primary hover:underline flex-shrink-0"
+            aria-label="Back to transactions"
+          >
+            ← Back
+          </button>
+          <h1 className="text-xl sm:text-2xl font-bold truncate">
+            Transaction Detail
+          </h1>
           <StatusBadge status={tx.status} />
+        </div>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setIsDecoderOpen(true)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-semibold rounded-xl shadow-sm transition-colors"
+            aria-label="Decode Stellar XDR"
+          >
+            <FileCode className="w-4 h-4" />
+            <span>Decode XDR</span>
+          </button>
           <button
             type="button"
             onClick={() => exportReceiptPdf(tx)}
@@ -181,6 +206,13 @@ export default function TransactionDetail() {
           </button>
         </div>
       </div>
+
+      <XdrDecoderModal
+        isOpen={isDecoderOpen}
+        onClose={() => setIsDecoderOpen(false)}
+        initialXdr={rawXdr}
+        txHash={tx.txHash || tx._id || tx.id}
+      />
 
       <div className="bg-white dark:bg-slate-900 shadow-sm border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden">
         {/* Core identifiers */}
