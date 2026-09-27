@@ -296,4 +296,8 @@ describe('evidence.service', () => {
       assert.match(csv, /ash-1,usr-1,\+2348022222222,deactivated,User request,Customer support ticket #1234,support-agent-1,compliance-lead-1/);
     });
   });
+
+  it('exports MAX_EXPORT_ROWS with value 5000', () => {
+    assert.equal(evidenceService.MAX_EXPORT_ROWS, 5000);
+  });
 });
