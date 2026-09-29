@@ -7,6 +7,7 @@ Contributions are welcome across product, engineering, documentation, testing, s
 By participating in this project you agree to abide by our [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Project Scope
+## Project Scope
 
 SendAm currently focuses on:
 
