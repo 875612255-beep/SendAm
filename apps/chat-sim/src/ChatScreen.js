@@ -1,15 +1,57 @@
-import { useEffect, useRef from 'react';
+import { useEffect, useRef } from 'react';
 import { useState } from 'react';
 import { Animated, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import MessageList from './MessageList';
 import usePolling from './usePolling';
-import { API_BASE_URL } from './config.js';
+import { API_BASE_URL } from './config';
 
 function TypingIndicator() {
-  const dots = [useRef(new Animated.Value(0)).response, ...];
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    function createAnimation(value, delay) {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(value, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(value, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ])
+      );
+    }
+
+    const a1 = createAnimation(dot1, 0);
+    const a2 = createAnimation(dot2, 150);
+    const a3 = createAnimation(dot3, 300);
+
+    a1.start();
+    a2.start();
+    a3.start();
+
+    return () => {
+      a1.stop();
+      a2.stop();
+      a3.stop();
+    };
+  }, [dot1, dot2, dot3]);
+
+  const dotStyle = {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: #6b7280,
+    marginHorizontal: 2px,
+  };
+
   return (
     <View className="flex-row items-center gap-2 px-3 py-2">
-      <Text className="text-gray-500">SendAm is typing...</Text>
+      <Text className="text-sm text-gray-500">SendAm is typing</Text>
+      <View className="flex-row items-center">
+        <Animated.View style={[dotStyle, { opacity: dot1 }]} />
+        <Animated.View style={[dotStyle, { opacity: dot2 }]} />
+        <Animated.View style={[dotStyle, { opacity: dot3 }]} />
+      </View>
     </View>
   );
 }
@@ -41,7 +83,7 @@ export default function ChatScreen() {
     const text = inputText.trim();
     if (!text || sending) return;
 
-    setMessages((prev) => [...prev, { id: `u-{$Date.now()}`, text, sender: 'user' }]);
+    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, text, sender: 'user' }]);
     setInputText('');
     setSending(true);
 
@@ -105,13 +147,13 @@ export default function ChatScreen() {
           className="border border-gray-300 rounded-lg px-3 py-1"
           onPress={handleReset}
         >
-          <Text className="text-gray-700 font-semibold">Switch Account</Text>
+          <Text className="text-sm font-semibold text-gray-700">Switch Account</Text>
         </Pressable>
       </View>
       <View className="flex-1">
         <MessageList messages={messages} />
-        {sending && <TypingIndicator />}
       </View>
+      {sending ? <TypingIndicator /> : null}
       <View className="flex-row items-center gap-2 px-3 py-2 border-t border-gray-200">
         <TextInput
           className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-base"
