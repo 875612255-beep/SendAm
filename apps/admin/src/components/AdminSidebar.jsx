@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Users, Wallet, ArrowRightLeft, LogOut, FileSearch, Activity, ShieldCheck } from 'lucide-react';
+import { LayoutDashboard, Users, Wallet, ArrowRightLeft, LogOut, UserCheck, ScrollText, Activity } from 'lucide-react';
 import { removeToken } from '@/lib/auth';
 import { getAdminMe } from '@/lib/adminApi';
 import { hasPermission } from '@/lib/permissions';
@@ -10,8 +10,8 @@ const ALL_LINKS = [
   { name: 'Users', path: '/users', icon: Users, permission: 'admin.read' },
   { name: 'Wallets', path: '/wallets', icon: Wallet, permission: 'admin.read' },
   { name: 'Transactions', path: '/transactions', icon: ArrowRightLeft, permission: 'admin.read' },
-  { name: 'KYC', path: '/kyc', icon: FileSearch, permission: 'compliance.read' },
-  { name: 'Audit', path: '/audit-logs', icon: FileSearch, permission: 'admin.read' },
+  { name: 'KYC', path: '/kyc', icon: UserCheck, permission: 'compliance.read' },
+  { name: 'Audit', path: '/audit-logs', icon: ScrollText, permission: 'admin.read' },
   { name: 'Health', path: '/system-health', icon: Activity, permission: 'operations.write' },
 ];
 
@@ -58,7 +58,6 @@ export default function AdminSidebar() {
               </Link>
             );
           })}
-          {permissions && <ShieldCheck className="w-5 h-5 text-gray-300 mx-auto mt-2" aria-hidden />}
         </nav>
       </div>
 
