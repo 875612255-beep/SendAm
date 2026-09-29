@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAdminTransactions } from '@/lib/adminApi';
+import { getAdminTransactions, exportAdminTransactions } from '@/lib/adminApi';
 import { useListQuery } from '@/lib/useListQuery';
 import { formatDate } from '@shared/formatDate';
 import { normalizeError } from '@shared/normalizeError.js';
@@ -24,6 +24,20 @@ export default function Transactions() {
   const [pagination, setPagination] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [exporting, setExporting] = useState(false);
+  const [exportError, setExportError] = useState(null);
+
+  const handleExport = async () => {
+    setExporting(true);
+    setExportError(null);
+    try {
+      await exportAdminTransactions(params);
+    } catch (err) {
+      setExportError(err.response?.data?.message || 'Failed to export transactions');
+    } finally {
+      setExporting(false);
+    }
+  };
 
   useEffect(() => {
     let active = true;
@@ -76,10 +90,27 @@ export default function Transactions() {
     <div className="min-w-0">
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-6">
         <h1 className="text-xl sm:text-2xl font-bold">Transactions</h1>
-        <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
-          {pagination?.total != null ? `Total: ${pagination.total}` : ''}
-        </span>
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full border border-gray-200 shadow-sm">
+            {pagination?.total != null ? `Total: ${pagination.total}` : ''}
+          </span>
+          <button
+            type="button"
+            onClick={handleExport}
+            disabled={exporting}
+            className="text-sm rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium shadow-sm hover:bg-gray-50 disabled:opacity-50"
+            data-testid="export-transactions"
+          >
+            {exporting ? 'Exporting…' : 'Export CSV'}
+          </button>
+        </div>
       </div>
+
+      {exportError && (
+        <div role="alert" className="mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded text-sm">
+          {exportError}
+        </div>
+      )}
 
       <FilterBar
         fields={[
