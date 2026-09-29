@@ -1,9 +1,43 @@
+import { useEffect, useRef from 'react';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Animated, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import MessageList from './MessageList';
 import usePolling from './usePolling';
+import { API_BASE_URL } from './config.js';
 
-const API_BASE_URL = 'http://localhost:3002';
+function TypingIndicator() {
+  const dots = [useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0))];
+
+  useEffect(() => {
+    const animations = dots.map((dot, index) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(index * 150),
+          Animated.timing(dot, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
+          Animated.delay(300),
+        ]),
+      ),
+    );
+    animations.forEach((animation) => animation.start());
+    return () => animations.forEach((animation) => animation.stop());
+  }, []);
+
+  return (
+    <View className="flex-row items-center gap-1 px-3 py-2">
+      <Text className="text-sm text-gray-500">SendAm is typing</Text>
+      {dots.map((dot, index) => (
+        <Animated.Text
+          key={index}
+          className="text-sm text-gray-500"
+          style={{ opacity: dot }}
+        >
+          .
+        </Animated.Text>
+      ))
+    </View>
+  );
+}
 
 export default function ChatScreen() {
   const [phoneNumber, setPhoneNumber] = useState(null);
@@ -18,6 +52,14 @@ export default function ChatScreen() {
     const trimmed = phoneInput.trim();
     if (!trimmed) return;
     setPhoneNumber(trimmed);
+  }
+
+  function handleReset() {
+    setPhoneNumber(null);
+    setPhoneInput('');
+    setMessages([]);
+    setInputText('');
+    setSending(false);
   }
 
   async function handleSend() {
@@ -81,8 +123,19 @@ export default function ChatScreen() {
       className="flex-1 bg-white"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <View className="flex-row items-center justify-between px-3 py-2 border-b border-gray-200">
+        <Text className="text-base font-semibold text-gray-900">{phoneNumber}</Text>
+        <Pressable
+          testID="reset-session-button"
+          className="border border-gray-300 rounded-lg px-3 py-1"
+          onPress={handleReset}
+        >
+          <Text className="text-sm font-semibold text-gray-700">Switch Account</Text>
+        </Pressable>
+      </View>
       <View className="flex-1">
         <MessageList messages={messages} />
+        {sending ? <TypingIndicator /> : null}
       </View>
       <View className="flex-row items-center gap-2 px-3 py-2 border-t border-gray-200">
         <TextInput
