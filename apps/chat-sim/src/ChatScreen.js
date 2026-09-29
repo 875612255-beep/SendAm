@@ -6,35 +6,10 @@ import usePolling from './usePolling';
 import { API_BASE_URL } from './config.js';
 
 function TypingIndicator() {
-  const dots = [useRef(new Animated.Value(0)), useRef(new Animated.Value(0)), useRef(new Animated.Value(0))];
-
-  useEffect(() => {
-    const animations = dots.map((dot, index) =>
-      Animated.loop(
-        Animated.sequence([
-          Animated.delay(index * 150),
-          Animated.timing(dot, { toValue: 1, duration: 300, useNativeDriver: true }),
-          Animated.timing(dot, { toValue: 0, duration: 300, useNativeDriver: true }),
-          Animated.delay(300),
-        ]),
-      ),
-    );
-    animations.forEach((animation) => animation.start());
-    return () => animations.forEach((animation) => animation.stop());
-  }, []);
-
+  const dots = [useRef(new Animated.Value(0)).response, ...];
   return (
-    <View className="flex-row items-center gap-1 px-3 py-2">
-      <Text className="text-sm text-gray-500">SendAm is typing</Text>
-      {dots.map((dot, index) => (
-        <Animated.Text
-          key={index}
-          className="text-sm text-gray-500"
-          style={{ opacity: dot }}
-        >
-          .
-        </Animated.Text>
-      ))
+    <View className="flex-row items-center gap-2 px-3 py-2">
+      <Text className="text-gray-500">SendAm is typing...</Text>
     </View>
   );
 }
@@ -66,7 +41,7 @@ export default function ChatScreen() {
     const text = inputText.trim();
     if (!text || sending) return;
 
-    setMessages((prev) => [...prev, { id: `u-${Date.now()}`, text, sender: 'user' }]);
+    setMessages((prev) => [...prev, { id: `u-{$Date.now()}`, text, sender: 'user' }]);
     setInputText('');
     setSending(true);
 
@@ -130,12 +105,12 @@ export default function ChatScreen() {
           className="border border-gray-300 rounded-lg px-3 py-1"
           onPress={handleReset}
         >
-          <Text className="text-sm font-semibold text-gray-700">Switch Account</Text>
+          <Text className="text-gray-700 font-semibold">Switch Account</Text>
         </Pressable>
       </View>
       <View className="flex-1">
         <MessageList messages={messages} />
-        {sending ? <TypingIndicator /> : null}
+        {sending && <TypingIndicator />}
       </View>
       <View className="flex-row items-center gap-2 px-3 py-2 border-t border-gray-200">
         <TextInput
