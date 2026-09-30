@@ -1,9 +1,60 @@
+import { useEffect, useRef } from 'react';
 import { useState } from 'react';
-import { KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
+import { Animated, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, View } from 'react-native';
 import MessageList from './MessageList';
 import usePolling from './usePolling';
+import { API_BASE_URL } from './config';
 
-const API_BASE_URL = 'http://localhost:3002';
+function TypingIndicator() {
+  const dot1 = useRef(new Animated.Value(0)).current;
+  const dot2 = useRef(new Animated.Value(0)).current;
+  const dot3 = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    function createAnimation(value, delay) {
+      return Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(value, { toValue: 1, duration: 300, useNativeDriver: true }),
+          Animated.timing(value, { toValue: 0, duration: 300, useNativeDriver: true }),
+        ])
+      );
+    }
+
+    const a1 = createAnimation(dot1, 0);
+    const a2 = createAnimation(dot2, 150);
+    const a3 = createAnimation(dot3, 300);
+
+    a1.start();
+    a2.start();
+    a3.start();
+
+    return () => {
+      a1.stop();
+      a2.stop();
+      a3.stop();
+    };
+  }, [dot1, dot2, dot3]);
+
+  const dotStyle = {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: #6b7280,
+    marginHorizontal: 2px,
+  };
+
+  return (
+    <View className="flex-row items-center gap-2 px-3 py-2">
+      <Text className="text-sm text-gray-500">SendAm is typing</Text>
+      <View className="flex-row items-center">
+        <Animated.View style={[dotStyle, { opacity: dot1 }]} />
+        <Animated.View style={[dotStyle, { opacity: dot2 }]} />
+        <Animated.View style={[dotStyle, { opacity: dot3 }]} />
+      </View>
+    </View>
+  );
+}
 
 export default function ChatScreen() {
   const [phoneNumber, setPhoneNumber] = useState(null);
@@ -18,6 +69,14 @@ export default function ChatScreen() {
     const trimmed = phoneInput.trim();
     if (!trimmed) return;
     setPhoneNumber(trimmed);
+  }
+
+  function handleReset() {
+    setPhoneNumber(null);
+    setPhoneInput('');
+    setMessages([]);
+    setInputText('');
+    setSending(false);
   }
 
   async function handleSend() {
@@ -81,9 +140,20 @@ export default function ChatScreen() {
       className="flex-1 bg-white"
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
+      <View className="flex-row items-center justify-between px-3 py-2 border-b border-gray-200">
+        <Text className="text-base font-semibold text-gray-900">{phoneNumber}</Text>
+        <Pressable
+          testID="reset-session-button"
+          className="border border-gray-300 rounded-lg px-3 py-1"
+          onPress={handleReset}
+        >
+          <Text className="text-sm font-semibold text-gray-700">Switch Account</Text>
+        </Pressable>
+      </View>
       <View className="flex-1">
         <MessageList messages={messages} />
       </View>
+      {sending ? <TypingIndicator /> : null}
       <View className="flex-row items-center gap-2 px-3 py-2 border-t border-gray-200">
         <TextInput
           className="flex-1 border border-gray-300 rounded-full px-4 py-2 text-base"
