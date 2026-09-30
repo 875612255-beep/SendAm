@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { ChevronDown, ChevronUp, Copy, Check, Code } from 'lucide-react';
 import { getAdminTransaction } from '@/lib/adminApi';
 import { formatDate } from '@shared/formatDate';
 import StatusBadge from '@/components/StatusBadge';
@@ -14,6 +15,63 @@ const Field = ({ label, value, mono = false, children }) => (
   </div>
 );
 
+const renderJsonWithSyntaxHighlighting = (jsonStr) => {
+  if (!jsonStr) return null;
+  const jsonRegex = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*":?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+
+  while ((match = jsonRegex.exec(jsonStr)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push(jsonStr.substring(lastIndex, match.index));
+    }
+
+    const token = match[0];
+    if (token.endsWith(':')) {
+      const keyStr = token.slice(0, -1);
+      parts.push(
+        <span key={match.index} className="text-purple-300 font-semibold">
+          {keyStr}
+        </span>
+      );
+      parts.push(':');
+    } else if (token.startsWith('"')) {
+      parts.push(
+        <span key={match.index} className="text-emerald-300">
+          {token}
+        </span>
+      );
+    } else if (token === 'true' || token === 'false') {
+      parts.push(
+        <span key={match.index} className="text-amber-300 font-medium">
+          {token}
+        </span>
+      );
+    } else if (token === 'null') {
+      parts.push(
+        <span key={match.index} className="text-rose-400 italic">
+          {token}
+        </span>
+      );
+    } else {
+      parts.push(
+        <span key={match.index} className="text-sky-300 font-mono">
+          {token}
+        </span>
+      );
+    }
+
+    lastIndex = jsonRegex.lastIndex;
+  }
+
+  if (lastIndex < jsonStr.length) {
+    parts.push(jsonStr.substring(lastIndex));
+  }
+
+  return parts;
+};
+
 /**
  * Transaction detail / drill-down page.
  * Route: /transactions/:id
@@ -26,6 +84,8 @@ export default function TransactionDetail() {
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showRawJson, setShowRawJson] = useState(false);
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     const fetchTx = async () => {
@@ -41,6 +101,28 @@ export default function TransactionDetail() {
     };
     fetchTx();
   }, [id]);
+
+  const handleCopyJson = async (e) => {
+    if (e) e.stopPropagation();
+    if (!tx) return;
+    const jsonString = JSON.stringify(tx, null, 2);
+    try {
+      if (navigator?.clipboard?.writeText) {
+        await navigator.clipboard.writeText(jsonString);
+      } else {
+        const textArea = document.createElement('textarea');
+        textArea.value = jsonString;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+      }
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      console.error('Failed to copy JSON payload:', err);
+    }
+  };
 
   if (loading) {
     return (
@@ -188,7 +270,53 @@ export default function TransactionDetail() {
             </div>
           </>
         )}
+
+        {/* Raw JSON Payload (Collapsible) */}
+        <div className="border-t border-gray-200">
+          <div className="px-4 py-3 bg-gray-50 flex items-center justify-between">
+            <button
+              type="button"
+              onClick={() => setShowRawJson(!showRawJson)}
+              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 focus:outline-none focus:underline"
+              aria-expanded={showRawJson}
+            >
+              <Code className="w-4 h-4 text-gray-500 flex-shrink-0" />
+              <span>View Raw JSON</span>
+              {showRawJson ? (
+                <ChevronUp className="w-4 h-4 text-gray-500 ml-1 flex-shrink-0" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-gray-500 ml-1 flex-shrink-0" />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleCopyJson}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 transition-colors shadow-sm"
+              aria-label="Copy JSON"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-green-600" />
+                  <span className="text-green-600 font-semibold">Copied!</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-3.5 h-3.5 text-gray-500" />
+                  <span>Copy JSON</span>
+                </>
+              )}
+            </button>
+          </div>
+          {showRawJson && (
+            <div className="p-4 bg-gray-900 text-gray-100 overflow-x-auto">
+              <pre className="text-xs font-mono whitespace-pre-wrap break-all leading-relaxed">
+                {renderJsonWithSyntaxHighlighting(JSON.stringify(tx, null, 2))}
+              </pre>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
 }
+
