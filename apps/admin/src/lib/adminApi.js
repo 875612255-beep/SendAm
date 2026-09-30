@@ -104,6 +104,14 @@ const triggerDownload = (blob, filename) => {
   window.URL.revokeObjectURL(url);
 };
 
+export const exportAdminTransactions = async (params = {}) => {
+  // Strip cursor/pagination params — exports always cover the full filtered set.
+  const { after: _a, before: _b, limit: _l, ...filters } = params;
+  const response = await api.get('/admin/transactions/export', { params: filters, responseType: 'blob' });
+  triggerDownload(response.data, 'transactions-export.csv');
+  return response.data;
+};
+
 export const exportAdminKyc = async (params = {}) => {
   // Strip cursor/pagination params — exports always cover the full filtered set.
   const { after: _a, before: _b, limit: _l, ...filters } = params;
