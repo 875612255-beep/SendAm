@@ -85,6 +85,39 @@ responses, Meta delivery failures, or absence of verified message events during
 expected traffic. Track callback latency and queue age separately; a valid
 signature does not prove downstream processing succeeded.
 
+## Troubleshooting
+
+### Verification-challenge mismatch (GET fails or falls through)
+
+**Symptom:** Meta's webhook setup rejects the callback, or the GET verification never succeeds.
+
+**Diagnosis:**
+- Confirm the verify token entered in the Meta app dashboard matches `WHATSAPP_VERIFY_TOKEN` in the deployment secret store exactly, this value is operator-generated, not the access token or app secret (see "Credentials and ownership" above).
+- Confirm the callback URL is HTTPS, has no query parameters, and isn't rewritten by a proxy or CDN before reaching the API.
+- A malformed verification GET now returns `400`; wrong credentials return `403`. Check the deployment logs for `whatsapp_webhook_verification_rejected` to see which case applies.
+- If you're unsure the URL matches what Meta is calling, re-run the **Configure production WhatsApp webhook** workflow described under "Rollout," which reads the GET challenge and confirms it succeeds.
+
+### Signature-verification failure (POST returns 403)
+
+**Symptom:** Meta reports delivery failures, or the API logs show rejected webhook POSTs.
+
+**Diagnosis:**
+- Signature checking happens in `apps/api/src/middlewares/verifyWhatsappSignature.js`. It rejects with `403` and logs `whatsapp_webhook_signature_rejected` with a `reason` of either `missing_or_malformed` (the `X-Hub-Signature-256` header is absent or not in the expected `sha256=<64 hex chars>` format) or `mismatch` (the computed HMAC doesn't match any configured secret).
+- Confirm `WHATSAPP_APP_SECRET` belongs to the same Meta app that owns the WABA sending the webhook, a secret from the wrong app will always mismatch.
+- Confirm the proxy or load balancer in front of the API forwards the **raw, unmodified request body**. The signature is computed over `req.rawBody`, not the re-serialized JSON, so any re-encoding (whitespace changes, key reordering) breaks verification even with the correct secret.
+- If you're mid-rotation, `WHATSAPP_APP_SECRET` may hold multiple comma-separated secrets (see "Safe Webhook App Secret Rotation"). A successful match logs `whatsapp_webhook_signature_verified` with `verifiedBy: "active"` or `verifiedBy: "previous_index_N"`, use this to confirm which secret is actually being matched.
+- In production, if `WHATSAPP_APP_SECRET` is unset entirely, every POST is rejected immediately, check for this first if *all* webhooks are failing rather than just some.
+
+### Webhook not receiving events at all
+
+**Symptom:** No `whatsapp_webhook_*` log events appear despite expected traffic, but the callback itself passes verification.
+
+**Diagnosis:**
+- Confirm the WABA is actually subscribed to the `messages` field in the Meta app dashboard, subscription is set via the `/{WABA-ID}/subscribed_apps` endpoint during the configuration workflow, and can silently drift if changed outside that workflow.
+- Confirm `GET /health` succeeds and the callback URL is publicly reachable without authentication or redirects, per step 2 of "Rollout."
+- Check for `whatsapp_webhook_configuration_failed` in the logs, this indicates the subscription itself never registered correctly.
+- Rule out the app not being live, or the sending phone number not being on the allowed test list, if the app is still in development mode in the Meta dashboard.
+
 ## Recovery and rotation
 
 For failed GET verification, compare the exact HTTPS URL and verify token, check
