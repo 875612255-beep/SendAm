@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getAdminStats } from '@/lib/adminApi';
 import StatCard from '@/components/StatCard';
+import CorridorChart from '@/components/CorridorChart';
 import Loader from '@shared/Loader';
 import { normalizeError } from '@shared/normalizeError.js';
 import { Users, Wallet, ArrowRightLeft, CheckCircle2, XCircle, FileSearch } from 'lucide-react';
@@ -60,6 +61,11 @@ export default function Dashboard() {
         <StatCard title="Failed Txs" value={stats?.failedTransactions || 0} icon={XCircle} colorClass="text-red-500" />
         <StatCard title="Pending Txs" value={stats?.pendingTransactions || 0} icon={ArrowRightLeft} colorClass="text-amber-500" />
         <StatCard title="Pending KYC" value={stats?.pendingKyc || 0} icon={FileSearch} colorClass="text-indigo-500" />
+      </div>
+
+      {/* Financial Canvas Chart Suite (Closes #586) */}
+      <div className="mt-8 sm:mt-10">
+        <CorridorChart data={stats?.corridorAnalytics} />
       </div>
 
       {Array.isArray(stats?.balances) && stats.balances.length > 0 && (
