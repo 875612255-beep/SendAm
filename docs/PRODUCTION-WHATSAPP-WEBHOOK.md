@@ -56,6 +56,26 @@ The same validation can be run from a trusted operator host with
 `npm run whatsapp:webhook:configure --workspace=apps/api`. It mutates the Meta
 subscription and must not be run from an untrusted workstation.
 
+## Inbound payload handling
+
+A single POST to `/webhook` can carry both inbound messages (`value.messages`)
+and delivery receipts (`value.statuses`). Every message and status in the batch
+is processed independently, so one malformed sibling never discards the rest.
+
+Accepted inbound message types are `text`, `audio`, `voice`, `interactive`,
+`location`, `image`, `document`, and `sticker`
+(`apps/api/src/whatsapp/webhook.validator.js`). Only `text`, `audio`, and
+`voice` are processed; everything else — including an `interactive` reply from a
+quick-reply button or list picker — is acknowledged and dropped with the
+`unsupported` outcome. The outbound payload shapes SendAm actually sends, the
+reference Cloud API shapes for interactive buttons and lists, and the
+text-token "action ids" that currently stand in for button ids are documented
+in [WhatsApp Message Payloads](../README.md#whatsapp-message-payloads).
+
+Delivery receipts (`value.statuses`) are written to the durable webhook inbox
+before the request is acknowledged. If that ingestion fails the webhook returns
+503 so Meta redelivers, rather than losing the delivery evidence permanently.
+
 ## Compatibility and security boundary
 
 The callback path and environment variable names already used by deployments
