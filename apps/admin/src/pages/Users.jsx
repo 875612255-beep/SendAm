@@ -224,7 +224,7 @@ export default function Users() {
         <div className="flex justify-center py-20"><Loader /></div>
       ) : (
         <>
-          <DataTable columns={columns} data={users} keyField="_id" />
+          <DataTable caption="Users" columns={columns} data={users} keyField="_id" />
           <Pagination pagination={pagination} onNext={goNext} onPrev={goPrev} />
         </>
       )}
