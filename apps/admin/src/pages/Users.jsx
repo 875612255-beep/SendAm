@@ -232,16 +232,16 @@ export default function Users() {
       {/* Onboarding Checkpoints Modal */}
       {onboardingUser && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center pb-4 border-b border-slate-100 mb-4">
+          <div className="bg-white dark:bg-slate-900 rounded-2xl max-w-lg w-full p-6 shadow-xl max-h-[90vh] overflow-y-auto border border-gray-100 dark:border-slate-800">
+            <div className="flex justify-between items-center pb-4 border-b border-slate-100 dark:border-slate-800 mb-4">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Onboarding Status</h2>
-                <p className="text-xs text-slate-500">{onboardingUser.phoneNumber}</p>
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Onboarding Status</h2>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{onboardingUser.phoneNumber}</p>
               </div>
               <button
                 type="button"
                 onClick={() => { setOnboardingUser(null); setOnboardingData(null); }}
-                className="text-slate-400 hover:text-slate-600 text-lg font-bold px-2"
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg font-bold px-2"
               >
                 ✕
               </button>

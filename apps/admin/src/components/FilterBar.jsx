@@ -15,9 +15,9 @@ export default function FilterBar({ fields = [], getFilter, setFilter, onReset }
     >
       {fields.map((field) => {
         const value = getFilter(field.key);
-        const common = 'text-sm rounded-lg border border-gray-200 bg-white px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40';
+        const common = 'text-sm rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-gray-900 dark:text-gray-100 px-3 py-1.5 shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40';
         return (
-          <label key={field.key} className="flex flex-col gap-1 text-xs text-gray-500">
+          <label key={field.key} className="flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
             {field.label}
             {field.type === 'select' ? (
               <select
@@ -47,7 +47,7 @@ export default function FilterBar({ fields = [], getFilter, setFilter, onReset }
       <button
         type="button"
         onClick={onReset}
-        className="text-sm rounded-lg border border-gray-200 bg-white px-3 py-1.5 font-medium shadow-sm hover:bg-gray-50"
+        className="text-sm rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-200 px-3 py-1.5 font-medium shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
         data-testid="filter-reset"
       >
         Reset

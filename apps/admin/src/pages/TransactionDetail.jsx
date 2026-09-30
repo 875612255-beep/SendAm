@@ -182,12 +182,12 @@ export default function TransactionDetail() {
         </div>
       </div>
 
-      <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
+      <div className="bg-white dark:bg-slate-900 shadow-sm border border-gray-200 dark:border-slate-800 rounded-xl overflow-hidden">
         {/* Core identifiers */}
-        <div className="px-4 py-3 bg-gray-50 border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700">Identifiers</h2>
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Identifiers</h2>
         </div>
-        <dl className="divide-y divide-gray-100 px-4">
+        <dl className="divide-y divide-gray-100 dark:divide-slate-800 px-4">
           <Field label="ID" value={tx._id || tx.id} mono />
           <Field label="Idempotency Key" value={tx.idempotencyKey} mono />
           <Field label="Tx Hash" value={tx.txHash} mono />
@@ -207,44 +207,44 @@ export default function TransactionDetail() {
         </dl>
 
         {/* Monetary */}
-        <div className="px-4 py-3 bg-gray-50 border-t border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700">Amount</h2>
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border-t border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Amount</h2>
         </div>
-        <dl className="divide-y divide-gray-100 px-4">
+        <dl className="divide-y divide-gray-100 dark:divide-slate-800 px-4">
           <Field label="Type">
-            <span className="capitalize font-medium">{tx.type}</span>
+            <span className="capitalize font-medium text-slate-900 dark:text-slate-100">{tx.type}</span>
           </Field>
           <Field label="Amount">
-            <span className="font-bold">{tx.amount} {tx.asset}</span>
+            <span className="font-bold text-slate-900 dark:text-slate-100">{tx.amount} {tx.asset}</span>
           </Field>
           <Field label="Fiat Amount">
             {tx.fiatAmount
-              ? <span>{tx.fiatAmount} {tx.fiatCurrency}</span>
+              ? <span className="text-slate-900 dark:text-slate-100">{tx.fiatAmount} {tx.fiatCurrency}</span>
               : <span className="text-gray-400">—</span>}
           </Field>
           <Field label="Quote ID" value={tx.quoteId} mono />
         </dl>
 
         {/* Routing */}
-        <div className="px-4 py-3 bg-gray-50 border-t border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700">Routing</h2>
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border-t border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Routing</h2>
         </div>
-        <dl className="divide-y divide-gray-100 px-4">
+        <dl className="divide-y divide-gray-100 dark:divide-slate-800 px-4">
           <Field label="Rail">
-            <span className="capitalize">{tx.rail || '—'}</span>
+            <span className="capitalize text-slate-900 dark:text-slate-100">{tx.rail || '—'}</span>
           </Field>
           <Field label="Route Type">
-            <span className="capitalize">{tx.routeType || '—'}</span>
+            <span className="capitalize text-slate-900 dark:text-slate-100">{tx.routeType || '—'}</span>
           </Field>
           <Field label="Destination" value={tx.destination} mono />
           <Field label="Recipient Phone" value={tx.recipientPhoneNumber} />
         </dl>
 
         {/* Parties */}
-        <div className="px-4 py-3 bg-gray-50 border-t border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700">Parties</h2>
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border-t border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Parties</h2>
         </div>
-        <dl className="divide-y divide-gray-100 px-4">
+        <dl className="divide-y divide-gray-100 dark:divide-slate-800 px-4">
           <Field label="Sender Phone">
             {tx.userId?.phoneNumber
               ? (
@@ -262,10 +262,10 @@ export default function TransactionDetail() {
         </dl>
 
         {/* Timestamps */}
-        <div className="px-4 py-3 bg-gray-50 border-t border-b border-gray-200">
-          <h2 className="text-sm font-semibold text-gray-700">Timestamps</h2>
+        <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border-t border-b border-gray-200 dark:border-slate-800">
+          <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Timestamps</h2>
         </div>
-        <dl className="divide-y divide-gray-100 px-4">
+        <dl className="divide-y divide-gray-100 dark:divide-slate-800 px-4">
           <Field label="Created" value={formatDate(tx.createdAt)} />
           <Field label="Updated" value={formatDate(tx.updatedAt)} />
         </dl>
@@ -273,11 +273,11 @@ export default function TransactionDetail() {
         {/* Metadata */}
         {tx.metadata && Object.keys(tx.metadata).length > 0 && (
           <>
-            <div className="px-4 py-3 bg-gray-50 border-t border-b border-gray-200">
-              <h2 className="text-sm font-semibold text-gray-700">Metadata</h2>
+            <div className="px-4 py-3 bg-gray-50 dark:bg-slate-800/60 border-t border-b border-gray-200 dark:border-slate-800">
+              <h2 className="text-sm font-semibold text-gray-700 dark:text-gray-300">Metadata</h2>
             </div>
             <div className="px-4 py-4">
-              <pre className="text-xs font-mono bg-gray-50 p-3 rounded border border-gray-200 overflow-x-auto whitespace-pre-wrap break-all">
+              <pre className="text-xs font-mono bg-gray-50 dark:bg-slate-950 p-3 rounded border border-gray-200 dark:border-slate-800 overflow-x-auto whitespace-pre-wrap break-all text-slate-800 dark:text-slate-200">
                 {JSON.stringify(tx.metadata, null, 2)}
               </pre>
             </div>
