@@ -5,6 +5,8 @@ import { getAdminTransaction } from '@/lib/adminApi';
 import { formatDate } from '@shared/formatDate';
 import StatusBadge from '@/components/StatusBadge';
 import Loader from '@shared/Loader';
+import { exportReceiptPdf } from '@/lib/receiptPdf';
+import { Download } from 'lucide-react';
 
 const Field = ({ label, value, mono = false, children }) => (
   <div className="py-3 sm:grid sm:grid-cols-3 sm:gap-4">
@@ -166,7 +168,18 @@ export default function TransactionDetail() {
         <h1 className="text-xl sm:text-2xl font-bold truncate">
           Transaction Detail
         </h1>
-        <StatusBadge status={tx.status} />
+        <div className="flex items-center gap-3">
+          <StatusBadge status={tx.status} />
+          <button
+            type="button"
+            onClick={() => exportReceiptPdf(tx)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-lg shadow-sm hover:bg-slate-50 transition"
+            aria-label="Download PDF Receipt"
+          >
+            <Download className="w-4 h-4 text-slate-500" />
+            <span>Download PDF Receipt</span>
+          </button>
+        </div>
       </div>
 
       <div className="bg-white shadow-sm border border-gray-200 rounded-xl overflow-hidden">
