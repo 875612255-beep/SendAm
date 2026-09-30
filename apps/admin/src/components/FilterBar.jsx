@@ -3,9 +3,14 @@
 // Values are read from the URL via `getFilter` and written via `setFilter`,
 // which keeps them in sync with the shared list query state.
 export default function FilterBar({ fields = [], getFilter, setFilter, onReset }) {
+  const activeFilters = fields
+    .map((field) => ({ field, value: getFilter(field.key) }))
+    .filter(({ value }) => value);
+
   return (
+    <div className="mb-4">
     <form
-      className="flex flex-wrap items-end gap-3 mb-4"
+      className="flex flex-wrap items-end gap-3"
       onSubmit={(e) => e.preventDefault()}
     >
       {fields.map((field) => {
@@ -48,5 +53,39 @@ export default function FilterBar({ fields = [], getFilter, setFilter, onReset }
         Reset
       </button>
     </form>
+    {activeFilters.length > 0 && (
+      <ul className="flex flex-wrap items-center gap-2 mt-3" aria-label="Active filters">
+        {activeFilters.map(({ field, value }) => (
+          <li
+            key={field.key}
+            className="inline-flex items-center gap-1 rounded-full bg-gray-100 pl-3 pr-1 py-1 text-xs text-gray-700"
+          >
+            <span>{field.label}: {value}</span>
+            <button
+              type="button"
+              onClick={() => setFilter(field.key, '')}
+              aria-label={`Clear ${field.label} filter`}
+              className="rounded-full px-1.5 leading-none hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-primary/40"
+              data-testid={`filter-chip-clear-${field.key}`}
+            >
+              &times;
+            </button>
+          </li>
+        ))}
+        {activeFilters.length >= 2 && (
+          <li>
+            <button
+              type="button"
+              onClick={onReset}
+              className="text-xs font-medium text-gray-600 underline hover:text-gray-900"
+              data-testid="filter-clear-all"
+            >
+              Clear All
+            </button>
+          </li>
+        )}
+      </ul>
+    )}
+    </div>
   );
 }
