@@ -9,6 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/SECRET-SCANNING.md` has a "Run It Locally" section with the exact gitleaks install, self-test and scan commands (#466).
 - Automated accessibility coverage for the admin dashboard: jest-axe scans
   plus keyboard/focus/landmark/label assertions over the real admin workflows
   (navigation, tables, pagination, forms, status indicators) in
