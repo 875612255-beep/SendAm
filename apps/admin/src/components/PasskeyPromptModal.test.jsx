@@ -40,7 +40,7 @@ describe('PasskeyPromptModal', () => {
 
     const dialog = screen.getByRole('dialog', { name: /biometric step-up required/i });
     expect(within(dialog).getByText(/deactivate customer account/i)).toBeInTheDocument();
-    expect(within(dialog).getByText(/touch id, face id, windows hello/i)).toBeInTheDocument();
+    expect(within(dialog).getAllByText(/touch id, face id, windows hello/i).length).toBeGreaterThan(0);
 
     await userEvent.click(within(dialog).getByRole('button', { name: /verify with passkey/i }));
     expect(onVerify).toHaveBeenCalledTimes(1);

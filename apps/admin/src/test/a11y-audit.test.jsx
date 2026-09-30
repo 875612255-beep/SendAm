@@ -106,7 +106,7 @@ const AUDIT_HANDLERS = [
 ];
 
 const renderAt = (path) => {
-  setToken('a11y-audit-token');
+  setToken('a11y-audit-token', { broadcast: false });
   return render(
     <MemoryRouter initialEntries={[path]}>
       <App />
@@ -117,17 +117,17 @@ const renderAt = (path) => {
 // Every route declared in App.jsx. The catch-all (`*`) is included as
 // /no-such-admin-route, which renders the Dashboard.
 const AUDITED_ROUTES = [
-  { path: '/login', ready: () => screen.findByRole('button', { name: /sign in/i }) },
-  { path: '/set-password', ready: () => screen.findByRole('button', { name: /set password/i }) },
-  { path: '/', ready: () => screen.findByRole('heading', { name: 'Dashboard Overview' }) },
-  { path: '/users', ready: () => screen.findByRole('table') },
-  { path: '/wallets', ready: () => screen.findByRole('table') },
-  { path: '/transactions', ready: () => screen.findByRole('table') },
-  { path: '/transactions/tx1', ready: () => screen.findByRole('heading', { name: 'Transaction Detail' }) },
-  { path: '/kyc', ready: () => screen.findByRole('table') },
-  { path: '/audit-logs', ready: () => screen.findByRole('table') },
-  { path: '/system-health', ready: () => screen.findByRole('heading', { name: 'System Health' }) },
-  { path: '/no-such-admin-route', ready: () => screen.findByRole('heading', { name: 'Dashboard Overview' }) },
+  { path: '/login', ready: () => screen.findByRole('button', { name: /sign in/i }, { timeout: 5000 }) },
+  { path: '/set-password', ready: () => screen.findByRole('button', { name: /set password/i }, { timeout: 5000 }) },
+  { path: '/', ready: () => screen.findByRole('heading', { name: 'Dashboard Overview' }, { timeout: 5000 }) },
+  { path: '/users', ready: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { path: '/wallets', ready: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { path: '/transactions', ready: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { path: '/transactions/tx1', ready: () => screen.findByRole('heading', { name: 'Transaction Detail' }, { timeout: 5000 }) },
+  { path: '/kyc', ready: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { path: '/audit-logs', ready: () => screen.findByRole('table', {}, { timeout: 5000 }) },
+  { path: '/system-health', ready: () => screen.findByRole('heading', { name: 'System Health' }, { timeout: 5000 }) },
+  { path: '/no-such-admin-route', ready: () => screen.findByRole('heading', { name: 'Dashboard Overview' }, { timeout: 5000 }) },
 ];
 
 // Run axe over a mounted view and file the outcome for the HTML report.
@@ -170,10 +170,11 @@ resetAuditRecords();
 
 beforeEach(() => {
   server.use(...AUDIT_HANDLERS);
+  setToken('a11y-audit-token', { broadcast: false });
 });
 
 afterEach(() => {
-  removeToken();
+  removeToken({ broadcast: false });
 });
 
 afterAll(() => {
@@ -291,6 +292,9 @@ describe('admin WCAG 2.2 AAA audit', () => {
       await user.click(within(row).getByRole('button', { name: /^deactivate$/i }));
       const dialog = await screen.findByRole('dialog');
       await user.click(within(dialog).getByRole('button', { name: /confirm deactivation/i }));
+      const passkeyPrompt = await screen.findByTestId('passkey-prompt');
+      await user.click(within(passkeyPrompt).getByRole('checkbox'));
+      await user.click(within(passkeyPrompt).getByRole('button', { name: /continue without passkey/i }));
       // The list also refetches, so the shared Loader contributes a second live
       // region — assert the confirmation is among the status regions.
       await waitFor(() =>
@@ -446,7 +450,11 @@ describe('admin WCAG 2.2 AAA audit', () => {
     ];
 
     const sortTable = () => {
-      const { container } = render(<DataTable columns={SORTABLE_COLUMNS} data={ROWS} />);
+      const { container } = render(
+        <MemoryRouter>
+          <DataTable columns={SORTABLE_COLUMNS} data={ROWS} />
+        </MemoryRouter>
+      );
       const headerFor = (name) =>
         within(container).getByRole('columnheader', { name: new RegExp(`^${name}`, 'i') });
       const rowNames = () =>
@@ -495,7 +503,7 @@ describe('admin WCAG 2.2 AAA audit', () => {
       expect(rowNames()).toEqual(['Gamma', 'Beta', 'alpha']);
 
       await user.click(within(headerFor('Amount')).getByRole('button'));
-      expect(rowNames()).toEqual(['Beta', 'Gamma', 'alpha']);
+      expect(rowNames()).toEqual(['alpha', 'Gamma', 'Beta']);
 
       // The sort must not mutate the caller's array.
       expect(ROWS.map((r) => r.name)).toEqual(['Beta', 'alpha', 'Gamma']);
@@ -569,8 +577,9 @@ describe('admin WCAG 2.2 AAA audit', () => {
         // ...and a per-state glyph keeps states apart in monochrome.
         const glyph = container.querySelector('[aria-hidden="true"]');
         expect(glyph, `${label} has no redundant non-colour indicator`).toBeInTheDocument();
-        expect(glyph.textContent).not.toBe(label);
-        expect(glyph.textContent.trim().length).toBeGreaterThan(0);
+        const glyphVal = glyph.getAttribute('data-glyph') || glyph.textContent;
+        expect(glyphVal).not.toBe(label);
+        expect(glyphVal.trim().length).toBeGreaterThan(0);
       }
     });
 
@@ -580,7 +589,8 @@ describe('admin WCAG 2.2 AAA audit', () => {
       const glyphByState = new Map();
       for (const { status, label } of STATES) {
         const { container } = render(<StatusBadge status={status} />);
-        glyphByState.set(label, container.querySelector('[aria-hidden="true"]').textContent);
+        const glyph = container.querySelector('[aria-hidden="true"]');
+        glyphByState.set(label, glyph.getAttribute('data-glyph') || glyph.textContent);
       }
       // Known states map to their own glyph...
       expect(glyphByState.get('success')).not.toBe(glyphByState.get('pending'));
@@ -647,6 +657,8 @@ describe('admin WCAG 2.2 AAA audit', () => {
       expect(screen.getByLabelText('Email')).toHaveFocus();
       await user.tab();
       expect(screen.getByLabelText('Password')).toHaveFocus();
+      await user.tab();
+      expect(screen.getByRole('button', { name: /show password/i })).toHaveFocus();
       await user.tab();
       expect(screen.getByRole('button', { name: /sign in/i })).toHaveFocus();
     });

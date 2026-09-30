@@ -88,12 +88,9 @@ export default function TransactionDetail() {
   const [tx, setTx] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-<<<<<<< HEAD
   const [showRawJson, setShowRawJson] = useState(false);
   const [copied, setCopied] = useState(false);
-=======
   const [isDecoderOpen, setIsDecoderOpen] = useState(false);
->>>>>>> 1843b45 (feat(admin): implement client-side stellar horizon xdr transaction envelope decoder and visualizer)
 
   useEffect(() => {
     const fetchTx = async () => {
@@ -322,7 +319,7 @@ export default function TransactionDetail() {
             <button
               type="button"
               onClick={() => setShowRawJson(!showRawJson)}
-              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 focus:outline-none focus:underline"
+              className="flex items-center gap-2 text-sm font-semibold text-gray-700 hover:text-gray-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
               aria-expanded={showRawJson}
             >
               <Code className="w-4 h-4 text-gray-500 flex-shrink-0" />

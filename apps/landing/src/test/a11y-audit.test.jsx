@@ -207,15 +207,17 @@ describe('landing WCAG 2.2 AAA audit', () => {
       const trigger = await screen.findByRole('button', { name: /do users need to understand crypto/i });
       const panelId = trigger.getAttribute('aria-controls');
       expect(panelId, 'the FAQ trigger must point at its panel with aria-controls').toBeTruthy();
-      // Collapsed: nothing expanded and no orphan panel.
+      // Collapsed: nothing expanded and panel hidden from assistive tech.
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
-      expect(document.getElementById(panelId)).toBeNull();
+      expect(document.getElementById(panelId)).toHaveAttribute('aria-hidden', 'true');
+      expect(document.getElementById(panelId)).toHaveAttribute('inert');
 
       await user.click(trigger);
       expect(trigger).toHaveAttribute('aria-expanded', 'true');
 
       const panel = document.getElementById(panelId);
-      expect(panel).toBeInTheDocument();
+      expect(panel).toHaveAttribute('aria-hidden', 'false');
+      expect(panel).not.toHaveAttribute('inert');
       // Labelled by the question, so a screen reader announces the answer in
       // the context of the question that revealed it.
       expect(panel).toHaveAttribute('role', 'region');
@@ -231,10 +233,11 @@ describe('landing WCAG 2.2 AAA audit', () => {
       const panelId = trigger.getAttribute('aria-controls');
 
       await user.click(trigger);
-      expect(document.getElementById(panelId)).toBeInTheDocument();
+      expect(trigger).toHaveAttribute('aria-expanded', 'true');
       await user.click(trigger);
       expect(trigger).toHaveAttribute('aria-expanded', 'false');
-      expect(document.getElementById(panelId)).toBeNull();
+      expect(document.getElementById(panelId)).toHaveAttribute('aria-hidden', 'true');
+      expect(document.getElementById(panelId)).toHaveAttribute('inert');
     });
 
     it('operates the FAQ accordion with the keyboard alone', async () => {
@@ -262,9 +265,9 @@ describe('landing WCAG 2.2 AAA audit', () => {
       renderAt('/onboarding');
       await screen.findByRole('heading', { name: /onboarding checkpoints/i });
       const statuses = screen.getAllByText(/^(Done|Pending|Blocked)$/);
-      // 2 complete + 1 incomplete in the demo dataset.
-      expect(statuses).toHaveLength(3);
-      expect(screen.getAllByText('Done')).toHaveLength(2);
+      // 5 complete + 1 incomplete in the demo dataset.
+      expect(statuses).toHaveLength(6);
+      expect(screen.getAllByText('Done')).toHaveLength(5);
       expect(screen.getAllByText('Pending')).toHaveLength(1);
     });
   });
@@ -295,7 +298,7 @@ describe('landing WCAG 2.2 AAA audit', () => {
         expect(within(nav).getByRole('link', { name })).toHaveFocus();
       }
       await user.tab();
-      expect(screen.getByRole('link', { name: /open whatsapp|start/i })).toHaveFocus();
+      expect(within(nav).getByRole('link', { name: /open whatsapp|start/i })).toHaveFocus();
     });
   });
 

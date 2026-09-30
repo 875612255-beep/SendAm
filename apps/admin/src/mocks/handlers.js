@@ -131,6 +131,33 @@ export const handlers = [
     });
   }),
 
+  // Transaction detail
+  http.get("*/api/admin/transactions/:id", ({ params }) => {
+    return HttpResponse.json({
+      data: {
+        _id: params.id || "tx1",
+        idempotencyKey: "idem-0001",
+        txHash: "a".repeat(64),
+        providerTransactionId: "prov-0001",
+        explorerUrl: "https://stellar.expert/explorer/testnet/tx/abc",
+        type: "deposit",
+        amount: "100",
+        asset: "USDC",
+        fiatAmount: "100.00",
+        fiatCurrency: "USD",
+        rail: "stellar",
+        routeType: "direct",
+        destination: "+1234567890",
+        recipientPhoneNumber: "+1999888777",
+        userId: { id: "u1", phoneNumber: "+1234567890" },
+        status: "Completed",
+        createdAt: "2026-01-05T10:00:00.000Z",
+        updatedAt: "2026-01-05T10:01:00.000Z",
+        metadata: { rail: "stellar" },
+      },
+    });
+  }),
+
   // Wallets
   http.get("*/api/admin/wallets", () => {
     return HttpResponse.json({
