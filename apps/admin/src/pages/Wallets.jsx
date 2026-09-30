@@ -61,7 +61,7 @@ export default function Wallets() {
         <div className="flex justify-center py-20"><Loader /></div>
       ) : (
         <>
-          <DataTable columns={columns} data={wallets} keyField="_id" />
+          <DataTable caption="Wallets" columns={columns} data={wallets} keyField="_id" />
           <Pagination pagination={pagination} onNext={goNext} onPrev={goPrev} />
         </>
       )}

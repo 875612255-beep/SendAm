@@ -7,6 +7,9 @@ import { useSearchParams } from 'react-router-dom';
  * Props:
  *   columns        — array of { header, accessor?, render? }
  *   data           — array of row objects
+ *   caption        — accessible name for the table; rendered as a visually-hidden
+ *                    <caption> (and used as the empty-state label) so screen-reader
+ *                    users can identify the table's purpose
  *   keyField       — unique key field name (default: 'id')
  *   onRowClick     — optional (row) => void handler; makes rows focusable / clickable
  *   rowClassName   — optional extra class(es) added to every <tr>
@@ -25,6 +28,7 @@ const NON_FILTER_PARAMS = new Set(['after', 'before', 'limit']);
 export default function DataTable({
   columns,
   data,
+  caption,
   keyField = 'id',
   onRowClick,
   rowClassName = '',
@@ -67,6 +71,7 @@ export default function DataTable({
     return (
       <div
         role="status"
+        aria-label={caption}
         className="bg-white rounded-xl border border-gray-100 shadow-sm px-6 py-14 sm:py-16 text-center"
       >
         <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-secondary text-primary">
@@ -99,6 +104,7 @@ export default function DataTable({
   return (
     <div className="w-full max-w-full overflow-x-auto bg-white rounded-xl border border-gray-100 shadow-sm">
       <table className="min-w-max w-full text-sm text-left text-gray-600">
+        {caption && <caption className="sr-only">{caption}</caption>}
         <thead className="text-xs text-gray-500 uppercase bg-gray-50 border-b border-gray-100">
           <tr>
             {columns.map((col, idx) => (

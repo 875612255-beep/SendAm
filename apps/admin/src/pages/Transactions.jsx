@@ -127,6 +127,7 @@ export default function Transactions() {
         <>
           {/* Rows are clickable — navigates to the drill-down detail page. */}
           <DataTable
+            caption="Transactions"
             columns={columns}
             data={transactions}
             keyField="_id"
