@@ -80,24 +80,36 @@ for alert-to-runbook mapping; these are the deeper references behind it.
 | [Wallet provisioning recovery](../wallet-provisioning.md) | Recovering failed wallet creation, funding and trustline stages | Wallet incidents (Playbook §3) |
 | [Smile ID KYC lifecycle](../KYC-PROVIDER.md) | KYC sandbox setup, rollout, idempotency, monitoring, recovery and rollback | Provider alerts, Playbook §8 |
 | [Secret scanning and push protection](../SECRET-SCANNING.md) | What is scanned, false-positive review, and credential rotation response | Credential compromise suspected |
-| [Admin account migration and rollback](../admin-account-migration.md) | Rollout and rollback of the admin account migration | Rollback criteria (Playbook §9) |
+| [Admin account migration and rollback](../admin-account-migration.md) | Rollout and rollback of the individual admin operator account migration | Rollback criteria (Playbook §9) |
 | [Customer identity migration and rollback plan](../IDENTITY_MIGRATION_PLAN.md) | Pre-migration validation, cutover and rollback for customer identities | Rollback criteria (Playbook §9) |
 | [Deployment manifests](../../apps/api/DEPLOYMENT.md) | Signed deployment manifest required for every production release | Rollback criteria (Playbook §9) |
 | [Load testing and capacity limits](../LOAD-TESTING.md) | How to run load tests, budgets, capacity settings, and scaling signals | `SendAmHighLatency`, `SendAmQueueLagHigh` |
 
-## Drill records
+## Runbook and drill index
 
-| Drill record | Runbooks exercised |
-|--------------|--------------------|
-| [2026-08-29 Tabletop: Payment outage and duplicate payment](drills/2026-08-29-tabletop-payment.md) | Payment Outage Response §4a-§4b, Duplicate Payment Response §4d |
-| [2026-08-29 Tabletop: Key management and credential compromise](drills/2026-08-29-tabletop-key-management.md) | Credential Compromise Response §5d, Key Management Incident Response §13 |
+Every runbook and drill document in this repository is listed here so it can be
+reached from this registry.
+
+| Document | What it covers |
+|----------|----------------|
+| [Operator Recovery Playbook](../OPERATOR-RECOVERY-PLAYBOOK.md) | Primary production recovery runbook; sections §3–§13 back the alert rows above. |
+| [Production PostgreSQL runbook](../PRODUCTION-DATABASE.md) | Database configuration, rollout, monitoring, rollback and restore-drill procedures. |
+| [Wallet provisioning recovery](../wallet-provisioning.md) | Recovering wallets stranded in funding or trustline provisioning stages. |
+| [Admin account migration and rollback](../admin-account-migration.md) | Rollout and rollback of the individual admin operator account migration. |
+| [Customer Identity Migration & Rollback Plan](../IDENTITY_MIGRATION_PLAN.md) | Pre-migration validation, cutover, verification and rollback for canonical customer identity. |
+| [Tabletop Exercise: Payment Outage & Duplicate Payment](drills/2026-08-29-tabletop-payment.md) | Drill record exercising the payment outage and duplicate payment runbooks. |
+| [Tabletop Exercise: Key Management & Credential Compromise](drills/2026-08-29-tabletop-key-management.md) | Drill record exercising the key management and credential compromise runbooks. |
+
+This index is checked by `apps/api/test/runbookRegistry.test.js`, which fails
+when a link target is missing or when a runbook/drill document is not listed
+here.
 
 ## Drill schedule
 
 | Drill | Frequency | Owner | Last run | Next due |
 |-------|-----------|-------|----------|----------|
-| Payment outage tabletop | Quarterly | Payments lead | 2026-08-29 | 2026-11-29 |
-| Key-management tabletop | Quarterly | Security lead | 2026-08-29 | 2026-11-29 |
+| [Payment outage tabletop](drills/2026-08-29-tabletop-payment.md) | Quarterly | Payments lead | 2026-08-29 | 2026-11-29 |
+| [Key-management tabletop](drills/2026-08-29-tabletop-key-management.md) | Quarterly | Security lead | 2026-08-29 | 2026-11-29 |
 | Database restore drill | Monthly (automated) | Engineering lead | 2026-08-29 | 2026-09-29 |
 | Queue failure tabletop | Semi-annual | Engineering lead | 2026-08-29 | 2027-02-29 |
 | Provider outage tabletop | Semi-annual | Provider owner | 2026-08-29 | 2027-02-29 |
@@ -105,4 +117,4 @@ for alert-to-runbook mapping; these are the deeper references behind it.
 
 ---
 
-*Last updated: 2026-08-29. Policy version: runbook-registry-v1.*
+*Last updated: 2026-09-30. Policy version: runbook-registry-v1.*
