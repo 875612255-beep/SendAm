@@ -46,7 +46,9 @@ function useDialogFocusTrap(isOpen, onClose) {
   // below depend on `isOpen` alone, so opening the dialog re-runs it once
   // instead of stealing focus on every subsequent render.
   const onCloseRef = useRef(onClose);
-  onCloseRef.current = onClose;
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  });
 
   useEffect(() => {
     const dialog = dialogRef.current;

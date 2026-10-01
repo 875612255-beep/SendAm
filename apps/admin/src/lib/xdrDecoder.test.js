@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import * as StellarSdk from '@stellar/stellar-sdk';
-import { decodeStellarXdr, stroopsToXlm, formatAsset, formatOperation } from './xdrDecoder';
+import { decodeStellarXdr, stroopsToXlm, formatAsset } from './xdrDecoder';
 
 describe('xdrDecoder utility', () => {
   const sourceKeyPair = StellarSdk.Keypair.random();

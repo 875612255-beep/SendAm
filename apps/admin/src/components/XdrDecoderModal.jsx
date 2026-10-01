@@ -10,7 +10,6 @@ import {
   Layers,
   FileCode,
   AlertCircle,
-  ExternalLink,
   ChevronDown,
   ChevronUp,
 } from 'lucide-react';
@@ -82,6 +81,7 @@ export default function XdrDecoderModal({
 
   useEffect(() => {
     if (initialXdr) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- sync editable XDR when a new initialXdr prop arrives
       setRawXdr(initialXdr);
     }
   }, [initialXdr]);

@@ -1,9 +1,10 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { TrendingUp, Activity, DollarSign, ArrowUpRight, BarChart3 } from 'lucide-react';
+import { BarChart3 } from 'lucide-react';
 
 /**
  * Default mock time-series data generator when API does not supply historical series.
  */
+// eslint-disable-next-line react-refresh/only-export-components -- sample-data helper shared with tests
 export function generateSampleCorridorData(interval = 'daily', corridor = 'ALL') {
   const points = interval === 'hourly' ? 24 : interval === 'weekly' ? 12 : 30;
   const now = Date.now();
@@ -25,7 +26,7 @@ export function generateSampleCorridorData(interval = 'daily', corridor = 'ALL')
     const txCount = Math.max(10, Math.round(baseTxCount * (1 + variance * 0.8)));
     const fees = +(volume * 0.0045).toFixed(2);
 
-    let label = '';
+    let label;
     if (interval === 'hourly') {
       label = timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
     } else if (interval === 'weekly') {
@@ -261,6 +262,7 @@ export default function CorridorChart({ data: propData, title = 'Corridor Volume
         x: paddingLeft + index * stepX,
         screenX: x,
         screenY: y,
+        canvasWidth: canvas.clientWidth,
       });
       setMousePos({ x, y, active: true });
     } else {
@@ -399,7 +401,7 @@ export default function CorridorChart({ data: propData, title = 'Corridor Volume
           <div
             className="absolute z-10 pointer-events-none bg-gray-900/90 backdrop-blur-md text-white px-3 py-2.5 rounded-xl text-xs shadow-xl border border-gray-800 transition-transform duration-75 min-w-[160px]"
             style={{
-              left: `${Math.min(Math.max(hoveredPoint.screenX - 80, 10), canvasRef.current?.clientWidth - 170 || 200)}px`,
+              left: `${Math.min(Math.max(hoveredPoint.screenX - 80, 10), hoveredPoint.canvasWidth - 170 || 200)}px`,
               top: '20px',
             }}
           >

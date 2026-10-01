@@ -20,7 +20,7 @@ const Field = ({ label, value, mono = false, children }) => (
 
 const renderJsonWithSyntaxHighlighting = (jsonStr) => {
   if (!jsonStr) return null;
-  const jsonRegex = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*":?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g;
+  const jsonRegex = /("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*":?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+-]?\d+)?)/g;
   const parts = [];
   let lastIndex = 0;
   let match;

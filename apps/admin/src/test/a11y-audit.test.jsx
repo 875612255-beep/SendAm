@@ -466,7 +466,7 @@ describe('admin WCAG 2.2 AAA audit', () => {
     };
 
     it('marks every unsorted sortable column aria-sort="none" and leaves fixed columns unmarked', () => {
-      const { container, headerFor } = sortTable();
+      const { headerFor } = sortTable();
       expect(headerFor('Name')).toHaveAttribute('aria-sort', 'none');
       expect(headerFor('Amount')).toHaveAttribute('aria-sort', 'none');
       // aria-sort on a column that cannot be sorted would misreport the table.
@@ -493,7 +493,7 @@ describe('admin WCAG 2.2 AAA audit', () => {
 
     it('reorders rows to match the announced sort', async () => {
       const user = userEvent.setup();
-      const { container, headerFor, rowNames } = sortTable();
+      const { headerFor, rowNames } = sortTable();
       expect(rowNames()).toEqual(['Beta', 'alpha', 'Gamma']);
 
       await user.click(within(headerFor('Name')).getByRole('button'));

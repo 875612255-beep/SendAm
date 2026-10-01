@@ -86,7 +86,6 @@ export default function OnboardingWizard() {
           {/* Step Indicator Header */}
           <div className="grid grid-cols-3 border-b border-slate-100 bg-slate-50/50">
             {STEPS.map((step) => {
-              const Icon = step.icon;
               const isActive = currentStep === step.id;
               const isPast = currentStep > step.id || completed;
               return (

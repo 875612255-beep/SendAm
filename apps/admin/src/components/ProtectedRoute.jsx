@@ -9,6 +9,7 @@ export default function ProtectedRoute({ children }) {
 
   useEffect(() => {
     // Synchronize authentication status with localStorage
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- re-sync with localStorage on mount
     setAuthed(isAuthenticated());
 
     const unsubscribe = sessionBroadcast.subscribe((type, payload) => {

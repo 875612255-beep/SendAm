@@ -34,7 +34,7 @@ export function formatOperation(op, index) {
   const type = op.type || op._switch?.name || 'UnknownOperation';
   const details = { ...op };
 
-  let summary = `${type}`;
+  let summary;
   const attributes = [];
 
   switch (type) {
@@ -219,7 +219,7 @@ export function decodeStellarXdr(rawXdr, networkPassphrase = StellarSdk.Networks
         networkPassphrase,
         rawJson: envelope.toJSON ? envelope.toJSON() : envelope,
       };
-    } catch (lowLevelErr) {
+    } catch {
       // Attempt TransactionResult parsing
       try {
         const result = StellarSdk.xdr.TransactionResult.fromXDR(cleanedXdr, 'base64');

@@ -94,7 +94,9 @@ class SessionBroadcastManager {
     if (this.channel) {
       try {
         this.channel.close();
-      } catch (_) {}
+      } catch {
+        // Channel may already be closed; nothing to do.
+      }
       this.channel = null;
     }
     this.listeners.clear();

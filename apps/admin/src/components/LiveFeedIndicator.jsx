@@ -1,4 +1,4 @@
-import { Activity, Wifi, WifiOff, RefreshCw } from 'lucide-react';
+import { Activity, WifiOff, RefreshCw } from 'lucide-react';
 
 /**
  * LiveFeedIndicator

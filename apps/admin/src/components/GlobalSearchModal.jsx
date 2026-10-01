@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, X, ArrowRight, CornerDownLeft, Loader2 } from "lucide-react";
+import { Search, X, CornerDownLeft, Loader2 } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 import { getAdminTransactions } from "@/lib/adminApi";
 
@@ -52,7 +52,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
           }
         })
         .catch(() => {});
-    } catch (_) {
+    } catch {
       // Fallback in environments without Web Worker support (e.g. mock test environments)
     }
 
@@ -64,6 +64,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
   // Autofocus input when modal opens
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- reset search state each time the modal opens
       setQuery("");
       setResults([]);
       setSelectedIndex(0);
@@ -75,6 +76,7 @@ export default function GlobalSearchModal({ isOpen, onClose }) {
   useEffect(() => {
     const trimmed = query.trim();
     if (!trimmed) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- clear results when query is emptied; search results arrive async from the worker
       setResults([]);
       setSearchDuration(null);
       setLoading(false);

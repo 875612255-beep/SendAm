@@ -108,7 +108,7 @@ export class WebSocketManager {
       this.ws.onerror = (error) => {
         this.emit('error', error);
       };
-    } catch (err) {
+    } catch {
       this.scheduleReconnect();
     }
   }

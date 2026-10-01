@@ -45,7 +45,7 @@ const prismaMock = {
 };
 
 const stellarAdapterMock = {
-  getBalances: async (publicKey) => {
+  getBalances: async (_publicKey) => {
     if (mockStellarShouldFail) {
       throw new Error('Horizon network error');
     }

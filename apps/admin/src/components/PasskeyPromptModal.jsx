@@ -178,6 +178,7 @@ export default function PasskeyPromptModal({
 // `runMutation` receives `{ passkeyAssertion, passkeyFallback }` and is only
 // invoked after the device prompt succeeds (or the fallback is acknowledged),
 // so the API is never called with an unsigned high-risk request.
+// eslint-disable-next-line react-refresh/only-export-components -- hook is intentionally co-located with the modal it drives
 export function usePasskeyStepUp({ fetchChallenge = getPasskeyStepUpChallenge } = {}) {
   const [request, setRequest] = useState(null);
   const [status, setStatus] = useState('idle');
