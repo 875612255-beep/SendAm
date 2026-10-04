@@ -5,7 +5,7 @@ this repo, and the **bot commands** the conversational assistant understands.
 
 ## Project scripts (npm)
 
-Audited against the root and every `apps/*` `package.json` (#461).
+Audited against the root and every `apps/*` `package.json` (#461, #535).
 `packages/shared` defines no scripts. Run root scripts from the repo root;
 per-app scripts either from the app directory or via
 `npm run <script> --workspace=apps/<app>`.
@@ -46,7 +46,21 @@ per-app scripts either from the app directory or via
 | `npm run db:verify-restore` | Backup restore drill (internal-only: ops runbook) |
 | `npm run whatsapp:webhook:configure` | Point the WhatsApp webhook at this deployment (internal-only: ops) |
 
-### Admin and landing (`apps/admin`, `apps/landing`)
+### Frontend applications
+
+The two web frontends bind fixed dev ports (`apps/landing/vite.config.js`,
+`apps/admin/vite.config.js`), the API listens on `PORT` (`3002` in
+`apps/api/.env.example`), and the chat simulator's Metro bundler starts on
+`8081`.
+
+| App | Dev server | Dev URL | Production build | Tests |
+|---|---|---|---|---|
+| Landing (`apps/landing`) | `npm run dev:landing` | http://localhost:3000 | `npm run build:landing` | `npm run test:landing` |
+| Admin (`apps/admin`) | `npm run dev:admin` | http://localhost:3001 | `npm run build:admin` | `npm run test:admin` |
+| Chat simulator (`apps/chat-sim`) | `npm run dev:chat-sim` | http://localhost:8081 (Metro) | — | `npm run test --workspace=apps/chat-sim` |
+
+Landing and admin share the same per-app scripts — run them from the app
+directory, or from the root with `npm run <script> --workspace=apps/<app>`:
 
 | Script | What it does |
 |---|---|
@@ -56,14 +70,14 @@ per-app scripts either from the app directory or via
 | `npm run lint` | ESLint |
 | `npm test` | Vitest, single run |
 | `npm run test:watch` | Vitest watch mode (landing only) |
+| `npm run test:e2e` | Playwright end-to-end run (landing only; `npm run test:e2e:landing` from the root) |
 
-### Chat simulator (`apps/chat-sim`)
-
-| Script | What it does |
-|---|---|
-| `npm start` | Expo dev server |
-| `npm run android` / `npm run ios` / `npm run web` | Expo dev server targeting that platform |
-| `npm test` | Jest suite |
+The chat simulator is an Expo app: `npm start` (root: `npm run dev:chat-sim`)
+starts Metro, and `npm run android` / `npm run ios` / `npm run web` target a
+single platform. It ships no build or lint script, and its Jest suite does not
+run on a fresh install — `jest-expo` is declared in `apps/chat-sim/package.json`
+but `jest` itself is not, so `npm test` there fails with
+`Cannot find module 'jest/package.json'`.
 
 ## Bot command reference
 
